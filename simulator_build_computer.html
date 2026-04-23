@@ -6,196 +6,300 @@
 <title>시뮬레이터 2 · 나만의 컴퓨터 만들기</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
-  .build-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  @media (min-width: 1000px) {
-    .build-layout { grid-template-columns: 1.4fr 1fr; }
-  }
+body { font-size: 16px; }
 
-  .computer-case {
-    background: white;
-    border-radius: 24px;
-    padding: 24px;
-    border: 2px solid var(--border);
-    position: relative;
-  }
+.build-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+@media (min-width: 1060px) {
+  .build-layout { grid-template-columns: 1.4fr 1fr; }
+}
 
-  .case-visual {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    border-radius: 20px;
-    padding: 28px;
-    min-height: 540px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
-    gap: 14px;
-    position: relative;
-  }
-  .case-visual::before {
-    content: "💻 컴퓨터 본체";
-    position: absolute;
-    top: -14px;
-    left: 24px;
-    background: var(--primary);
-    color: white;
-    padding: 4px 14px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 800;
-  }
+/* ── 상태바 ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 14px 22px;
+  background: white;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  flex-wrap: wrap;
+}
+.status-label { font-size: 17px; font-weight: 800; white-space: nowrap; }
+.progress-wrap {
+  flex: 1; min-width: 160px;
+  height: 18px;
+  background: #f1f1f1;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--green));
+  width: 0%;
+  transition: width 0.4s;
+  border-radius: 999px;
+}
+.progress-text { font-size: 17px; font-weight: 800; white-space: nowrap; }
 
-  .slot {
-    border: 3px dashed rgba(255,255,255,0.3);
-    border-radius: 14px;
-    padding: 16px;
-    min-height: 96px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255,255,255,0.6);
-    text-align: center;
-    transition: all 0.2s;
-    position: relative;
-  }
-  .slot.drag-over {
-    border-color: var(--primary);
-    background: rgba(255, 180, 0, 0.15);
-    transform: scale(1.02);
-  }
-  .slot.filled-correct {
-    border-style: solid;
-    border-color: var(--green);
-    background: rgba(81, 207, 102, 0.12);
-    color: white;
-    animation: pop 0.4s;
-  }
-  .slot.filled-wrong {
-    border-style: solid;
-    border-color: var(--accent);
-    background: rgba(255, 107, 107, 0.15);
-    animation: shake 0.4s;
-  }
-  .slot .slot-label {
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .slot .slot-hint {
-    font-size: 11px;
-    opacity: 0.7;
-  }
-  .slot .part-in-slot {
-    font-size: 40px;
-    margin-bottom: 4px;
-  }
-  .slot .part-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: white;
-  }
+/* ── 컴퓨터 케이스 ── */
+.computer-case {
+  background: white;
+  border-radius: 24px;
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+.case-header {
+  background: linear-gradient(135deg, #1a2940 0%, #2c3e50 100%);
+  padding: 14px 22px;
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.case-visual {
+  background: linear-gradient(160deg, #1e2d3d 0%, #121c28 100%);
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
 
-  .parts-tray {
-    background: white;
-    border-radius: 24px;
-    padding: 20px;
-    border: 2px solid var(--border);
-  }
-  .parts-tray h3 { color: var(--primary-dark); margin-bottom: 12px; }
-  .parts-tray .help-text { font-size: 12px; color: var(--text-light); margin-bottom: 16px; }
+.slot {
+  border: 3px dashed rgba(255,255,255,0.3);
+  border-radius: 16px;
+  padding: 16px 10px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.65);
+  text-align: center;
+  transition: all 0.25s;
+  cursor: pointer;
+  background: rgba(255,255,255,0.04);
+  position: relative;
+}
+.slot:hover:not(.filled-correct) { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.5); }
+.slot.drag-over { border-color: var(--primary); background: rgba(255,180,0,0.18); transform: scale(1.03); }
+.slot.filled-correct { border-style: solid; border-color: #51cf66; background: rgba(81,207,102,0.14); animation: pop 0.35s; }
+.slot.filled-wrong { animation: shake 0.4s; border-color: #ff6b6b; background: rgba(255,107,107,0.15); }
+.slot .slot-ico { font-size: 34px; margin-bottom: 6px; opacity: 0.55; }
+.slot .slot-name { font-size: 15px; font-weight: 800; line-height: 1.3; }
+.slot .slot-hint { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+.slot.filled-correct .placed-ico { font-size: 40px; margin-bottom: 6px; }
+.slot.filled-correct .placed-name { font-size: 16px; font-weight: 800; color: white; }
+.slot.filled-correct .placed-ok { font-size: 13px; color: #51cf66; margin-top: 4px; font-weight: 700; }
 
-  .parts-pool {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-  }
-  .part {
-    background: linear-gradient(135deg, #fff4d6 0%, #ffe6a3 100%);
-    border: 2px solid var(--primary);
-    border-radius: 14px;
-    padding: 12px 6px;
-    text-align: center;
-    cursor: grab;
-    transition: all 0.2s;
-    user-select: none;
-  }
-  .part:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-  .part.dragging { opacity: 0.3; cursor: grabbing; }
-  .part.used { display: none; }
-  .part .emoji { font-size: 40px; display: block; }
-  .part .label { font-weight: 700; font-size: 12px; margin-top: 4px; }
+/* ── 정보 패널 ── */
+.info-panel {
+  padding: 20px 22px;
+  border-top: 2px solid var(--border);
+  min-height: 160px;
+}
+.info-default {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-light);
+  font-size: 16px;
+}
+.info-default .hint-ico { font-size: 44px; }
+.info-card { display: none; }
+.info-card.visible { display: block; }
+.info-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.info-card-header .svg-frame {
+  width: 100px; height: 100px;
+  flex-shrink: 0;
+  background: #f8f8f8;
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px;
+}
+.info-card-header .svg-frame svg { width: 88px; height: 88px; }
+.info-card-title {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.analogy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff4d6;
+  border: 2px solid var(--primary);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #7a5200;
+  margin-bottom: 10px;
+}
+.trap-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffe5e5;
+  border: 2px solid #ff6b6b;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c62828;
+  margin-bottom: 10px;
+}
+.info-desc {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #333;
+  margin-bottom: 12px;
+}
+.example-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 6px;
+}
+.ex-tag {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border-radius: 999px;
+  padding: 4px 13px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.ex-tag.orange { background: #fff3e0; color: #e65100; }
+.ex-tag.blue   { background: #e3f2fd; color: #0d47a1; }
+.ex-tag.purple { background: #f3e5f5; color: #4a148c; }
+.ex-tag.red    { background: #fce4ec; color: #880e4f; }
 
-  .info-box {
-    background: linear-gradient(135deg, #e7f5ff 0%, #d0ebff 100%);
-    border-radius: 16px;
-    padding: 16px 20px;
-    margin-top: 16px;
-    border-left: 6px solid var(--blue-dark);
-    font-size: 13px;
-  }
-  .info-box strong { color: var(--blue-dark); }
+/* ── 부품 보관함 ── */
+.parts-tray {
+  background: white;
+  border-radius: 24px;
+  border: 2px solid var(--border);
+  padding: 20px;
+}
+.tray-title { font-size: 20px; font-weight: 800; color: var(--primary-dark); margin-bottom: 4px; }
+.tray-sub { font-size: 14px; color: var(--text-light); margin-bottom: 16px; }
 
-  .status-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    padding: 12px 20px;
-    background: white;
-    border-radius: 999px;
-    border: 2px solid var(--border);
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .progress-wrap {
-    flex: 1;
-    min-width: 180px;
-    height: 14px;
-    background: #f1f1f1;
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--green));
-    width: 0%;
-    transition: width 0.3s;
-  }
+.section-label {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 5px 14px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+.label-ok   { background: #e8f5e9; color: #1b5e20; }
+.label-trap { background: #fce4ec; color: #880e4f; }
 
-  .boot-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    color: #51cf66;
-    font-family: monospace;
-    padding: 24px;
-  }
-  .boot-overlay.show { display: flex; }
-  .boot-overlay .content {
-    max-width: 600px;
-    width: 100%;
-    font-size: 16px;
-    line-height: 1.8;
-  }
-  .boot-overlay .typing::after {
-    content: "▊";
-    animation: blink 1s infinite;
-  }
-  @keyframes blink { 50% { opacity: 0; } }
+.parts-pool {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.trap-pool {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.part {
+  background: linear-gradient(145deg, #fffbf0 0%, #fff3cc 100%);
+  border: 2.5px solid #ffc61a;
+  border-radius: 16px;
+  padding: 10px 6px 8px;
+  text-align: center;
+  cursor: grab;
+  transition: all 0.2s;
+  user-select: none;
+}
+.part:hover:not(.used) { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+.part.dragging { opacity: 0.25; transform: scale(0.95); }
+.part.used { display: none; }
+.part.selected { outline: 4px solid var(--primary); outline-offset: 2px; }
+.part .p-svg { width: 68px; height: 68px; margin: 0 auto 7px; display: block; }
+.part .p-svg svg { width: 68px; height: 68px; }
+.part .p-name { font-size: 14px; font-weight: 800; color: #333; line-height: 1.2; }
+.part .p-role { font-size: 12px; color: #888; margin-top: 3px; line-height: 1.3; }
 
-  .system-label {
-    font-size: 13px;
-    font-weight: 800;
-    margin: 16px 0 6px;
-    color: var(--primary-dark);
-  }
+.part.trap-part {
+  background: linear-gradient(145deg, #fff5f5 0%, #ffe0e0 100%);
+  border-color: #ff8080;
+}
+
+.trap-warning {
+  margin-top: 14px;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-left: 6px solid #ff6d00;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.trap-warning strong { color: #bf360c; }
+
+/* ── 부트 오버레이 ── */
+.boot-overlay {
+  position: fixed; inset: 0;
+  background: #080e14;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 32px;
+}
+.boot-overlay.show { display: flex; }
+.boot-terminal {
+  max-width: 660px; width: 100%;
+  background: #0d1117;
+  border-radius: 18px;
+  padding: 32px 36px;
+  font-family: 'Courier New', monospace;
+  font-size: 17px;
+  color: #51cf66;
+  line-height: 2;
+  box-shadow: 0 0 80px rgba(81,207,102,0.2);
+  border: 1px solid #21262d;
+}
+.boot-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #21262d;
+}
+.boot-dot { width: 14px; height: 14px; border-radius: 50%; }
+.boot-close-btn {
+  margin-top: 24px;
+  background: #21262d;
+  color: #51cf66;
+  border: 1px solid #30363d;
+  padding: 10px 28px;
+  border-radius: 999px;
+  font-family: monospace;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: block;
+}
+.boot-close-btn:hover { background: #30363d; }
 </style>
 </head>
 <body>
@@ -203,7 +307,7 @@
 <header class="app-header">
   <div>
     <h1>🖥️ 나만의 컴퓨터 만들기</h1>
-    <div class="subtitle">드래그로 부품을 올바른 자리에 조립해 보세요!</div>
+    <div class="subtitle">부품을 드래그해서 알맞은 슬롯에 조립해 보세요!</div>
   </div>
   <nav><a href="index.html">🏠 홈</a></nav>
 </header>
@@ -211,291 +315,736 @@
 <div class="container">
 
   <div class="status-bar">
-    <div style="font-weight:800;">📊 조립 진행률</div>
+    <div class="status-label">📊 조립 진행률</div>
     <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
-    <div id="progressText" style="font-weight:800;">0 / 6</div>
-    <button class="btn btn-secondary" id="resetBtn">↺ 다시 조립</button>
+    <div class="progress-text" id="progressText">0 / 6</div>
+    <button class="btn btn-secondary" id="resetBtn" style="font-size:15px;">↺ 다시 조립</button>
   </div>
 
   <div class="build-layout">
 
+    <!-- ── 왼쪽: 본체 + 정보 패널 ── -->
     <div class="computer-case">
+
+      <div class="case-header">
+        <span>🖥️</span> 컴퓨터 본체 — 6개의 부품을 채워보세요
+      </div>
+
       <div class="case-visual" id="caseVisual">
         <div class="slot" data-slot="cpu">
-          <div class="slot-label">🧠 중앙 처리 장치</div>
-          <div class="slot-hint">제어·연산을 담당</div>
+          <div class="slot-ico">🧠</div>
+          <div class="slot-name">중앙 처리 장치</div>
+          <div class="slot-hint">제어 + 연산 담당</div>
         </div>
         <div class="slot" data-slot="ram">
-          <div class="slot-label">💾 주기억 장치</div>
-          <div class="slot-hint">일시적 기억</div>
+          <div class="slot-ico">💾</div>
+          <div class="slot-name">주기억 장치</div>
+          <div class="slot-hint">임시 작업 공간</div>
         </div>
         <div class="slot" data-slot="mainboard">
-          <div class="slot-label">🔌 메인 보드</div>
-          <div class="slot-hint">모든 장치를 연결</div>
+          <div class="slot-ico">🔌</div>
+          <div class="slot-name">메인 보드</div>
+          <div class="slot-hint">모든 부품을 연결</div>
         </div>
         <div class="slot" data-slot="storage">
-          <div class="slot-label">🗄️ 보조 기억 장치</div>
+          <div class="slot-ico">🗄️</div>
+          <div class="slot-name">보조 기억 장치</div>
           <div class="slot-hint">영구 저장</div>
         </div>
         <div class="slot" data-slot="input">
-          <div class="slot-label">⌨️ 입력 장치</div>
-          <div class="slot-hint">자료 입력</div>
+          <div class="slot-ico">⌨️</div>
+          <div class="slot-name">입력 장치</div>
+          <div class="slot-hint">키보드·마우스 등</div>
         </div>
         <div class="slot" data-slot="output">
-          <div class="slot-label">🖥️ 출력 장치</div>
-          <div class="slot-hint">결과 표시</div>
+          <div class="slot-ico">🖥️</div>
+          <div class="slot-name">출력 장치</div>
+          <div class="slot-hint">모니터·프린터 등</div>
         </div>
       </div>
 
-      <div class="info-box" id="infoBox">
-        <strong>💡 팁:</strong> 부품을 선택한 후 <u>알맞은 슬롯</u>에 드래그하세요.
-        슬롯에는 해당 장치의 이름과 역할이 쓰여 있습니다.
-        잘못된 자리에 놓으면 다시 돌아옵니다!
+      <!-- 정보 패널 -->
+      <div class="info-panel">
+        <div class="info-default" id="infoDefault">
+          <div class="hint-ico">💡</div>
+          <div>
+            <div style="font-size:17px;font-weight:800;color:var(--primary-dark);margin-bottom:4px;">부품을 클릭하거나 드래그해 보세요!</div>
+            각 부품의 이름·역할·실제 예시를 여기서 확인할 수 있어요.
+          </div>
+        </div>
+        <div class="info-card" id="infoCard">
+          <div class="info-card-header">
+            <div class="svg-frame" id="infoSvgFrame"></div>
+            <div>
+              <div class="info-card-title" id="infoTitle"></div>
+              <div id="infoPill"></div>
+            </div>
+          </div>
+          <div class="info-desc" id="infoDesc"></div>
+          <div class="example-row" id="infoExamples"></div>
+        </div>
       </div>
+
     </div>
 
+    <!-- ── 오른쪽: 부품 보관함 ── -->
     <div class="parts-tray">
-      <h3>🧰 부품 보관함</h3>
-      <div class="help-text">터치 기기에서는 부품을 탭한 뒤 슬롯을 탭해도 배치됩니다.</div>
+      <div class="tray-title">🧰 부품 보관함</div>
+      <div class="tray-sub">탭(클릭) → 슬롯 탭, 또는 드래그로 배치</div>
 
-      <div class="system-label">💻 정보 처리 시스템 부품</div>
+      <div class="section-label label-ok">✅ 정보 처리 시스템 부품 (6개)</div>
       <div class="parts-pool" id="partsPool">
+
         <div class="part" draggable="true" data-part="cpu" data-name="CPU">
-          <span class="emoji">🧠</span>
-          <div class="label">CPU</div>
+          <div class="p-svg" id="tray-cpu"></div>
+          <div class="p-name">CPU</div>
+          <div class="p-role">제어·연산 처리</div>
         </div>
         <div class="part" draggable="true" data-part="ram" data-name="RAM">
-          <span class="emoji">💾</span>
-          <div class="label">RAM</div>
+          <div class="p-svg" id="tray-ram"></div>
+          <div class="p-name">RAM</div>
+          <div class="p-role">임시 기억 장치</div>
         </div>
         <div class="part" draggable="true" data-part="mainboard" data-name="메인보드">
-          <span class="emoji">🔌</span>
-          <div class="label">메인보드</div>
+          <div class="p-svg" id="tray-mainboard"></div>
+          <div class="p-name">메인보드</div>
+          <div class="p-role">부품 연결·데이터 교환</div>
         </div>
         <div class="part" draggable="true" data-part="storage" data-name="하드디스크">
-          <span class="emoji">🗄️</span>
-          <div class="label">하드디스크</div>
+          <div class="p-svg" id="tray-storage"></div>
+          <div class="p-name">하드디스크</div>
+          <div class="p-role">영구 저장 장치</div>
         </div>
         <div class="part" draggable="true" data-part="input" data-name="키보드">
-          <span class="emoji">⌨️</span>
-          <div class="label">키보드</div>
+          <div class="p-svg" id="tray-input"></div>
+          <div class="p-name">키보드</div>
+          <div class="p-role">자료 입력</div>
         </div>
         <div class="part" draggable="true" data-part="output" data-name="모니터">
-          <span class="emoji">🖥️</span>
-          <div class="label">모니터</div>
-        </div>
-        <!-- 함정 부품 (정보 전송 시스템의 일부) -->
-        <div class="part" draggable="true" data-part="modem" data-name="모뎀">
-          <span class="emoji">📠</span>
-          <div class="label">모뎀</div>
-        </div>
-        <div class="part" draggable="true" data-part="router" data-name="라우터">
-          <span class="emoji">🖧</span>
-          <div class="label">라우터</div>
+          <div class="p-svg" id="tray-output"></div>
+          <div class="p-name">모니터</div>
+          <div class="p-role">결과 출력·표시</div>
         </div>
       </div>
 
-      <div class="info-box" style="background:linear-gradient(135deg,#fff4d6 0%,#ffe6a3 100%);border-left-color:var(--primary-dark)">
-        <strong>⚠️ 주의!</strong> 보관함에는 <strong>정보 처리 시스템 부품 6개</strong>와
-        <strong>정보 전송 시스템 부품 2개(모뎀, 라우터)</strong>가 섞여 있어요.
-        컴퓨터 본체 안에 들어갈 6개만 골라 조립해야 합니다!
+      <div class="section-label label-trap">⚠️ 정보 전송 시스템 부품 (함정!)</div>
+      <div class="trap-pool">
+        <div class="part trap-part" draggable="true" data-part="modem" data-name="모뎀">
+          <div class="p-svg" id="tray-modem"></div>
+          <div class="p-name">모뎀</div>
+          <div class="p-role">신호 변환 장치</div>
+        </div>
+        <div class="part trap-part" draggable="true" data-part="router" data-name="라우터">
+          <div class="p-svg" id="tray-router"></div>
+          <div class="p-name">라우터</div>
+          <div class="p-role">통신 제어 장치</div>
+        </div>
+      </div>
+
+      <div class="trap-warning">
+        <strong>⚠️ 함정 주의!</strong> 모뎀과 라우터는 <strong>정보 전송 시스템</strong>의 부품으로,
+        컴퓨터 본체 안에 들어가지 않아요. 왜 들어갈 수 없는지 생각해 보세요!
       </div>
     </div>
 
   </div>
-
 </div>
 
+<!-- 부트 오버레이 -->
 <div class="boot-overlay" id="bootOverlay">
-  <div class="content">
+  <div class="boot-terminal">
+    <div class="boot-bar">
+      <div class="boot-dot" style="background:#ff5f56"></div>
+      <div class="boot-dot" style="background:#ffbd2e"></div>
+      <div class="boot-dot" style="background:#27c93f"></div>
+      <span style="margin-left:8px;font-size:13px;color:#8b949e;">BIOS — 부팅 시퀀스</span>
+    </div>
     <div id="bootLines"></div>
+    <button class="boot-close-btn" id="bootCloseBtn">[ 닫기 / ESC ]</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const partDescriptions = {
-  cpu: { slot: 'cpu', title: '🧠 CPU (중앙 처리 장치)', desc: '입력된 정보를 <strong>처리</strong>하고 출력 장치로 보내는 과정을 <strong>제어·조종</strong>하는 장치입니다. 제어 기능과 연산 기능을 담당합니다.' },
-  ram: { slot: 'ram', title: '💾 RAM (주기억 장치)', desc: '통신 및 제어 프로그램이 사용하는 <strong>데이터를 일시적으로 기억</strong>하는 장치입니다. RAM과 ROM이 여기에 포함됩니다.' },
-  mainboard: { slot: 'mainboard', title: '🔌 메인 보드', desc: '컴퓨터의 <strong>실행 환경을 설정</strong>하고 모든 장치의 데이터 교환을 원활하게 해주는 장치입니다.' },
-  storage: { slot: 'storage', title: '🗄️ 보조 기억 장치', desc: '처리된 정보를 <strong>영구적으로 저장</strong>하는 장치입니다. 하드디스크, DVD, USB 등이 있습니다.' },
-  input: { slot: 'input', title: '⌨️ 입력 장치', desc: '문자, 그림, 음성, 영상 등의 자료를 컴퓨터가 이해할 수 있는 <strong>신호로 바꾸어 주는</strong> 장치입니다. 키보드, 마우스, 스캐너, 터치스크린 등.' },
-  output: { slot: 'output', title: '🖥️ 출력 장치', desc: '컴퓨터가 만든 정보를 사람이 <strong>알아볼 수 있게 표시</strong>하는 장치입니다. 모니터, 프린터, 스피커 등.' },
-  modem: { slot: null, title: '📠 모뎀은 "정보 전송 시스템"의 신호 변환 장치입니다!', desc: '컴퓨터 본체 내부 부품이 아니에요. 아날로그 신호를 디지털로 바꿔 통신 회선으로 전송합니다.' },
-  router: { slot: null, title: '🖧 라우터는 "정보 전송 시스템"의 통신 제어 장치입니다!', desc: '컴퓨터 본체 내부 부품이 아니에요. 컴퓨터와 정보 통신망 사이의 데이터 경로를 만듭니다.' }
+// ══════════════════════════════════════════
+//  SVG 그래픽 데이터
+// ══════════════════════════════════════════
+const SVGS = {
+  cpu: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="25" y="3" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="37" y="3" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="49" y="3" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="61" y="3" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="25" y="83" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="37" y="83" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="49" y="83" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="61" y="83" width="8" height="14" rx="2" fill="#9e9e9e"/>
+    <rect x="3" y="25" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="3" y="37" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="3" y="49" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="3" y="61" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="83" y="25" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="83" y="37" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="83" y="49" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="83" y="61" width="14" height="8" rx="2" fill="#9e9e9e"/>
+    <rect x="16" y="16" width="68" height="68" rx="7" fill="#e8f5e9" stroke="#43a047" stroke-width="2.5"/>
+    <rect x="24" y="24" width="52" height="52" rx="5" fill="#a5d6a7"/>
+    <line x1="34" y1="26" x2="34" y2="74" stroke="#2e7d32" stroke-width="1.5" opacity="0.6"/>
+    <line x1="50" y1="26" x2="50" y2="74" stroke="#2e7d32" stroke-width="1.5" opacity="0.6"/>
+    <line x1="66" y1="26" x2="66" y2="74" stroke="#2e7d32" stroke-width="1.5" opacity="0.6"/>
+    <line x1="26" y1="36" x2="74" y2="36" stroke="#2e7d32" stroke-width="1.5" opacity="0.6"/>
+    <line x1="26" y1="50" x2="74" y2="50" stroke="#2e7d32" stroke-width="1.5" opacity="0.6"/>
+    <line x1="26" y1="64" x2="74" y2="64" stroke="#2e7d32" stroke-width="1.5" opacity="0.6"/>
+    <rect x="34" y="38" width="32" height="24" rx="4" fill="#1b5e20"/>
+    <text x="50" y="53" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="monospace">CPU</text>
+  </svg>`,
+
+  ram: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="28" width="92" height="44" rx="4" fill="#1a237e" stroke="#3949ab" stroke-width="2"/>
+    <rect x="8" y="62" width="84" height="9" rx="2" fill="#ffd54f"/>
+    <rect x="44" y="62" width="7" height="9" rx="1" fill="#1a237e"/>
+    <rect x="10" y="33" width="15" height="18" rx="2" fill="#37474f" stroke="#78909c" stroke-width="1.5"/>
+    <rect x="29" y="33" width="15" height="18" rx="2" fill="#37474f" stroke="#78909c" stroke-width="1.5"/>
+    <rect x="48" y="33" width="15" height="18" rx="2" fill="#37474f" stroke="#78909c" stroke-width="1.5"/>
+    <rect x="67" y="33" width="15" height="18" rx="2" fill="#37474f" stroke="#78909c" stroke-width="1.5"/>
+    <text x="17" y="45" text-anchor="middle" font-size="5.5" fill="#90a4ae" font-family="monospace">DDR5</text>
+    <text x="36" y="45" text-anchor="middle" font-size="5.5" fill="#90a4ae" font-family="monospace">DDR5</text>
+    <text x="55" y="45" text-anchor="middle" font-size="5.5" fill="#90a4ae" font-family="monospace">DDR5</text>
+    <text x="74" y="45" text-anchor="middle" font-size="5.5" fill="#90a4ae" font-family="monospace">DDR5</text>
+    <circle cx="10" cy="58" r="2" fill="#80cbc4"/><circle cx="15" cy="58" r="2" fill="#80cbc4"/>
+    <circle cx="82" cy="58" r="2" fill="#80cbc4"/><circle cx="87" cy="58" r="2" fill="#80cbc4"/>
+    <line x1="13" y1="62" x2="13" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="18" y1="62" x2="18" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="23" y1="62" x2="23" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="32" y1="62" x2="32" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="37" y1="62" x2="37" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="53" y1="62" x2="53" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="58" y1="62" x2="58" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="72" y1="62" x2="72" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="77" y1="62" x2="77" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+    <line x1="82" y1="62" x2="82" y2="71" stroke="#ffc107" stroke-width="1.5" opacity="0.5"/>
+  </svg>`,
+
+  mainboard: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="4" width="92" height="92" rx="6" fill="#1b5e20" stroke="#2e7d32" stroke-width="2"/>
+    <circle cx="11" cy="11" r="3" fill="none" stroke="#4caf50" stroke-width="1.5"/>
+    <circle cx="89" cy="11" r="3" fill="none" stroke="#4caf50" stroke-width="1.5"/>
+    <circle cx="11" cy="89" r="3" fill="none" stroke="#4caf50" stroke-width="1.5"/>
+    <circle cx="89" cy="89" r="3" fill="none" stroke="#4caf50" stroke-width="1.5"/>
+    <rect x="18" y="13" width="30" height="30" rx="3" fill="#0a3d0a" stroke="#66bb6a" stroke-width="2"/>
+    <rect x="22" y="17" width="22" height="22" rx="2" fill="#1b5e20"/>
+    <line x1="26" y1="21" x2="40" y2="21" stroke="#a5d6a7" stroke-width="1" opacity="0.6"/>
+    <line x1="26" y1="25" x2="40" y2="25" stroke="#a5d6a7" stroke-width="1" opacity="0.6"/>
+    <line x1="26" y1="29" x2="40" y2="29" stroke="#a5d6a7" stroke-width="1" opacity="0.6"/>
+    <line x1="26" y1="33" x2="40" y2="33" stroke="#a5d6a7" stroke-width="1" opacity="0.6"/>
+    <text x="33" y="39" text-anchor="middle" font-size="7" fill="#c8e6c9" font-weight="bold">CPU</text>
+    <rect x="54" y="13" width="8" height="28" rx="2" fill="#0a3d0a" stroke="#fff59d" stroke-width="1.5"/>
+    <rect x="65" y="13" width="8" height="28" rx="2" fill="#0a3d0a" stroke="#fff59d" stroke-width="1.5"/>
+    <rect x="76" y="13" width="8" height="28" rx="2" fill="#0a3d0a" stroke="#fff59d" stroke-width="1.5"/>
+    <text x="69" y="47" text-anchor="middle" font-size="6" fill="#fff59d">RAM 슬롯</text>
+    <path d="M 33 43 L 33 56 L 60 56" stroke="#81c784" stroke-width="2" fill="none" opacity="0.7"/>
+    <path d="M 60 28 L 60 56" stroke="#81c784" stroke-width="2" fill="none" opacity="0.7"/>
+    <path d="M 18 60 L 80 60" stroke="#fff59d" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="4,3"/>
+    <path d="M 18 68 L 80 68" stroke="#fff59d" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="4,3"/>
+    <rect x="10" y="52" width="22" height="10" rx="2" fill="#0a3d0a" stroke="#80cbc4" stroke-width="1.5"/>
+    <text x="21" y="60" text-anchor="middle" font-size="6.5" fill="#80cbc4">SATA</text>
+    <rect x="10" y="72" width="64" height="8" rx="2" fill="#0a3d0a" stroke="#ce93d8" stroke-width="1.5"/>
+    <text x="42" y="79" text-anchor="middle" font-size="6" fill="#ce93d8">PCIe 슬롯</text>
+    <rect x="77" y="72" width="14" height="12" rx="2" fill="#0a3d0a" stroke="#ef9a9a" stroke-width="1.5"/>
+    <text x="84" y="80" text-anchor="middle" font-size="5" fill="#ef9a9a">전원</text>
+    <rect x="54" y="52" width="18" height="14" rx="2" fill="#2e7d32" stroke="#a5d6a7" stroke-width="1.5"/>
+    <text x="63" y="62" text-anchor="middle" font-size="6.5" fill="#e8f5e9" font-weight="bold">칩셋</text>
+    <circle cx="12" cy="34" r="2.5" fill="#ffb74d" stroke="#e65100" stroke-width="1"/>
+    <circle cx="12" cy="41" r="2.5" fill="#ffb74d" stroke="#e65100" stroke-width="1"/>
+    <circle cx="12" cy="48" r="2.5" fill="#ffb74d" stroke="#e65100" stroke-width="1"/>
+  </svg>`,
+
+  storage: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="7" y="13" width="86" height="74" rx="10" fill="#37474f" stroke="#546e7a" stroke-width="2"/>
+    <rect x="9" y="15" width="82" height="70" rx="9" fill="#455a64"/>
+    <circle cx="44" cy="52" r="26" fill="#546e7a" stroke="#607d8b" stroke-width="2"/>
+    <circle cx="44" cy="52" r="20" fill="#37474f"/>
+    <circle cx="44" cy="52" r="23" fill="none" stroke="#607d8b" stroke-width="0.8" opacity="0.5"/>
+    <circle cx="44" cy="52" r="16" fill="none" stroke="#607d8b" stroke-width="0.8" opacity="0.5"/>
+    <circle cx="44" cy="52" r="11" fill="#455a64"/>
+    <circle cx="44" cy="52" r="6" fill="#607d8b"/>
+    <circle cx="44" cy="52" r="3" fill="#78909c"/>
+    <line x1="68" y1="30" x2="47" y2="51" stroke="#b0bec5" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="69" cy="28" r="5.5" fill="#90a4ae" stroke="#cfd8dc" stroke-width="1.5"/>
+    <circle cx="46" cy="52" r="3.5" fill="#ef9a9a"/>
+    <rect x="72" y="36" width="16" height="20" rx="2" fill="#37474f"/>
+    <rect x="74" y="38" width="12" height="7" rx="1" fill="#ffd54f"/>
+    <rect x="74" y="47" width="12" height="5" rx="1" fill="#b0bec5"/>
+    <circle cx="15" cy="22" r="3.5" fill="#546e7a" stroke="#607d8b" stroke-width="1"/>
+    <line x1="12.5" y1="22" x2="17.5" y2="22" stroke="#455a64" stroke-width="1.2"/>
+    <line x1="15" y1="19.5" x2="15" y2="24.5" stroke="#455a64" stroke-width="1.2"/>
+    <circle cx="15" cy="78" r="3.5" fill="#546e7a" stroke="#607d8b" stroke-width="1"/>
+    <line x1="12.5" y1="78" x2="17.5" y2="78" stroke="#455a64" stroke-width="1.2"/>
+    <line x1="15" y1="75.5" x2="15" y2="80.5" stroke="#455a64" stroke-width="1.2"/>
+    <text x="44" y="92" text-anchor="middle" font-size="7.5" fill="#90a4ae" font-weight="bold">HDD 1TB</text>
+  </svg>`,
+
+  input: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="24" width="92" height="58" rx="11" fill="#3e3e3e" stroke="#555" stroke-width="2"/>
+    <rect x="7" y="27" width="86" height="52" rx="9" fill="#484848"/>
+    <rect x="11" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="20" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="29" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="38" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="47" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="56" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="65" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="74" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="83" y="31" width="7" height="7" rx="2" fill="#606060"/>
+    <rect x="11" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="20" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="29" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="38" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="47" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="56" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="65" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="74" y="41" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="83" y="41" width="12" height="7" rx="2" fill="#606060"/>
+    <rect x="11" y="51" width="10" height="7" rx="2" fill="#727272"/>
+    <rect x="23" y="51" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="32" y="51" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="41" y="51" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="50" y="51" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="59" y="51" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="68" y="51" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="77" y="51" width="18" height="7" rx="2" fill="#606060"/>
+    <rect x="11" y="61" width="14" height="7" rx="2" fill="#727272"/>
+    <rect x="27" y="61" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="36" y="61" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="45" y="61" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="54" y="61" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="63" y="61" width="7" height="7" rx="2" fill="#727272"/>
+    <rect x="72" y="61" width="23" height="7" rx="2" fill="#606060"/>
+    <rect x="24" y="71" width="52" height="7" rx="4" fill="#606060"/>
+    <rect x="45" y="79" width="10" height="5" rx="2" fill="#8a8a8a"/>
+    <path d="M 50 84 Q 50 92 58 92" stroke="#666" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  </svg>`,
+
+  output: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="screenG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1565c0"/>
+        <stop offset="100%" stop-color="#0a2d6e"/>
+      </linearGradient>
+    </defs>
+    <rect x="7" y="7" width="86" height="62" rx="8" fill="#1e1e1e" stroke="#424242" stroke-width="2"/>
+    <rect x="11" y="11" width="78" height="54" rx="5" fill="url(#screenG)"/>
+    <rect x="11" y="11" width="78" height="9" rx="5" fill="#1976d2"/>
+    <rect x="11" y="17" width="78" height="3" fill="#1976d2"/>
+    <circle cx="17" cy="15.5" r="2.5" fill="#ef5350"/>
+    <circle cx="24" cy="15.5" r="2.5" fill="#ffca28"/>
+    <circle cx="31" cy="15.5" r="2.5" fill="#66bb6a"/>
+    <rect x="15" y="24" width="30" height="22" rx="3" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1"/>
+    <rect x="18" y="27" width="24" height="2.5" rx="1" fill="#60a5fa" opacity="0.8"/>
+    <rect x="18" y="32" width="18" height="2" rx="1" fill="#93c5fd" opacity="0.5"/>
+    <rect x="18" y="36" width="22" height="2" rx="1" fill="#93c5fd" opacity="0.5"/>
+    <rect x="18" y="40" width="16" height="2" rx="1" fill="#93c5fd" opacity="0.5"/>
+    <rect x="51" y="23" width="34" height="14" rx="3" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1"/>
+    <rect x="54" y="26" width="28" height="2.5" rx="1" fill="#60a5fa" opacity="0.8"/>
+    <rect x="54" y="31" width="20" height="2" rx="1" fill="#93c5fd" opacity="0.5"/>
+    <rect x="51" y="40" width="14" height="14" rx="3" fill="#f59e0b" opacity="0.9"/>
+    <rect x="67" y="40" width="14" height="14" rx="3" fill="#10b981" opacity="0.9"/>
+    <rect x="11" y="57" width="78" height="8" fill="#0d2d6b"/>
+    <circle cx="18" cy="61" r="3.5" fill="#3b82f6"/>
+    <rect x="30" y="59" width="16" height="4" rx="2" fill="#1d4ed8" opacity="0.7"/>
+    <circle cx="87" cy="64" r="2.5" fill="#51cf66"/>
+    <rect x="43" y="69" width="14" height="16" rx="3" fill="#424242"/>
+    <rect x="32" y="83" width="36" height="6" rx="3" fill="#333"/>
+  </svg>`,
+
+  modem: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="9" y="28" width="82" height="44" rx="11" fill="#d84315" stroke="#bf360c" stroke-width="2"/>
+    <rect x="11" y="30" width="78" height="40" rx="9" fill="#e64a19"/>
+    <rect x="16" y="36" width="38" height="16" rx="3" fill="#bf360c"/>
+    <text x="35" y="48" text-anchor="middle" font-size="9" fill="white" font-weight="bold">MODEM</text>
+    <circle cx="63" cy="44" r="5" fill="#1de9b6"/>
+    <text x="63" y="57" text-anchor="middle" font-size="5.5" fill="#b2dfdb">PWR</text>
+    <circle cx="73" cy="44" r="5" fill="#1de9b6"/>
+    <text x="73" y="57" text-anchor="middle" font-size="5.5" fill="#b2dfdb">DSL</text>
+    <circle cx="83" cy="44" r="5" fill="#ffd740"/>
+    <text x="83" y="57" text-anchor="middle" font-size="5.5" fill="#fff9c4">NET</text>
+    <rect x="16" y="60" width="14" height="7" rx="3" fill="#bf360c" stroke="#ff8a65" stroke-width="1.5"/>
+    <rect x="34" y="60" width="14" height="7" rx="3" fill="#bf360c" stroke="#ffca28" stroke-width="1.5"/>
+    <path d="M 11 63 Q 6 63 6 68 Q 6 76 3 76" stroke="#6d4c41" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path d="M 54 80 Q 60 72 66 80" stroke="#ff8a65" stroke-width="2.5" fill="none"/>
+    <path d="M 49 83 Q 60 69 71 83" stroke="#ff8a65" stroke-width="2" fill="none" opacity="0.6"/>
+    <path d="M 44 86 Q 60 66 76 86" stroke="#ff8a65" stroke-width="1.5" fill="none" opacity="0.3"/>
+  </svg>`,
+
+  router: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="23" y="6" width="7" height="30" rx="3.5" fill="#7b1fa2" stroke="#ab47bc" stroke-width="1.5"/>
+    <circle cx="26" cy="5" r="5.5" fill="#ab47bc" stroke="#ce93d8" stroke-width="1"/>
+    <rect x="47" y="3" width="7" height="34" rx="3.5" fill="#7b1fa2" stroke="#ab47bc" stroke-width="1.5"/>
+    <circle cx="50" cy="2" r="5.5" fill="#ce93d8" stroke="#e1bee7" stroke-width="1"/>
+    <rect x="71" y="6" width="7" height="30" rx="3.5" fill="#7b1fa2" stroke="#ab47bc" stroke-width="1.5"/>
+    <circle cx="74" cy="5" r="5.5" fill="#ab47bc" stroke="#ce93d8" stroke-width="1"/>
+    <path d="M 32 38 Q 50 26 68 38" stroke="#ce93d8" stroke-width="2.5" fill="none" opacity="0.85"/>
+    <path d="M 37 43 Q 50 33 63 43" stroke="#e1bee7" stroke-width="2" fill="none" opacity="0.65"/>
+    <rect x="9" y="46" width="82" height="42" rx="11" fill="#6a1b9a" stroke="#4a148c" stroke-width="2"/>
+    <rect x="11" y="48" width="78" height="38" rx="9" fill="#7b1fa2"/>
+    <rect x="14" y="53" width="38" height="16" rx="3" fill="#4a148c"/>
+    <text x="33" y="64" text-anchor="middle" font-size="9" fill="#e1bee7" font-weight="bold">ROUTER</text>
+    <circle cx="60" cy="61" r="5" fill="#b9f6ca"/>
+    <text x="60" y="74" text-anchor="middle" font-size="5.5" fill="#c8e6c9">PWR</text>
+    <circle cx="71" cy="61" r="5" fill="#b9f6ca"/>
+    <text x="71" y="74" text-anchor="middle" font-size="5.5" fill="#c8e6c9">WAN</text>
+    <circle cx="82" cy="61" r="5" fill="#ffd740"/>
+    <text x="82" y="74" text-anchor="middle" font-size="5.5" fill="#fff9c4">LAN</text>
+    <rect x="14" y="77" width="11" height="7" rx="2" fill="#4a148c" stroke="#ce93d8" stroke-width="1"/>
+    <rect x="28" y="77" width="11" height="7" rx="2" fill="#4a148c" stroke="#ce93d8" stroke-width="1"/>
+    <rect x="42" y="77" width="11" height="7" rx="2" fill="#4a148c" stroke="#ce93d8" stroke-width="1"/>
+  </svg>`
 };
 
-const infoBox = document.getElementById('infoBox');
-const toast = document.getElementById('toast');
-const progressFill = document.getElementById('progressFill');
-const progressText = document.getElementById('progressText');
+// ══════════════════════════════════════════
+//  부품 상세 정보
+// ══════════════════════════════════════════
+const PARTS = {
+  cpu: {
+    slot: 'cpu', name: 'CPU (중앙 처리 장치)',
+    color: '#1b5e20',
+    analogy: { icon:'🧠', text:'사람의 두뇌와 같아요' },
+    type: 'correct',
+    desc: `CPU는 컴퓨터의 <strong>두뇌</strong>입니다. 입력된 모든 정보를 처리하고, 나머지 부품들에게 명령을 내리는 가장 중요한 장치예요.<br><br>
+      <strong>두 가지 핵심 기능</strong><br>
+      🔧 <strong>제어 기능</strong> — "이 명령을 이 순서로 처리해!" 지시<br>
+      🔢 <strong>연산 기능</strong> — 더하기·빼기·비교 등 계산 처리<br><br>
+      CPU 성능이 좋을수록 더 빠르게 많은 일을 처리할 수 있어요.`,
+    examples: [
+      { text:'Intel Core i9', cls:'' }, { text:'AMD Ryzen 9', cls:'' },
+      { text:'Apple M3', cls:'blue' }, { text:'Snapdragon 8', cls:'blue' }
+    ]
+  },
+  ram: {
+    slot: 'ram', name: 'RAM (주기억 장치)',
+    color: '#0d47a1',
+    analogy: { icon:'📋', text:'공부할 때 펼쳐 놓는 책상 위 공간' },
+    type: 'correct',
+    desc: `RAM은 현재 실행 중인 프로그램과 데이터를 <strong>임시로 올려두는 작업 공간</strong>입니다.<br><br>
+      📌 전원을 끄면 내용이 <strong>모두 사라져요</strong> (휘발성 메모리)<br>
+      📌 RAM 용량이 클수록 여러 프로그램을 동시에 실행 가능<br>
+      📌 <strong>ROM</strong>도 주기억 장치 — 부팅 프로그램을 영구 저장<br><br>
+      RAM이 부족하면 컴퓨터가 느려지거나 프로그램이 튕겨요!`,
+    examples: [
+      { text:'8GB RAM', cls:'' }, { text:'16GB RAM', cls:'' },
+      { text:'32GB RAM', cls:'blue' }, { text:'ROM(바이오스)', cls:'orange' }
+    ]
+  },
+  mainboard: {
+    slot: 'mainboard', name: '메인 보드 (마더보드)',
+    color: '#1b5e20',
+    analogy: { icon:'🏗️', text:'건물의 뼈대 + 복도 역할' },
+    type: 'correct',
+    desc: `메인 보드는 CPU, RAM, 저장장치, 입출력 장치 등 <strong>모든 부품을 하나로 연결</strong>하는 기반 보드입니다.<br><br>
+      📌 부품들이 데이터를 주고받는 <strong>고속도로(버스)</strong> 역할<br>
+      📌 각 부품에 <strong>전원을 분배</strong><br>
+      📌 BIOS/UEFI를 통해 컴퓨터 <strong>기본 설정 관리</strong><br><br>
+      메인보드의 규격(소켓 타입)에 맞는 CPU와 RAM만 장착할 수 있어요.`,
+    examples: [
+      { text:'ASUS ROG', cls:'' }, { text:'MSI MAG', cls:'' },
+      { text:'Gigabyte Z790', cls:'blue' }, { text:'ATX / mATX', cls:'orange' }
+    ]
+  },
+  storage: {
+    slot: 'storage', name: '보조 기억 장치 (HDD/SSD)',
+    color: '#37474f',
+    analogy: { icon:'🗂️', text:'집의 책장·서랍장과 같아요' },
+    type: 'correct',
+    desc: `보조 기억 장치는 전원을 꺼도 데이터가 <strong>영구적으로 남아 있는</strong> 저장 장치입니다.<br><br>
+      📌 RAM과 달리 전원을 꺼도 <strong>데이터가 유지</strong>돼요 (비휘발성)<br>
+      📌 <strong>HDD</strong>: 자기 원판(플래터)에 데이터 저장, 가격 저렴<br>
+      📌 <strong>SSD</strong>: 플래시 메모리에 저장, 속도가 훨씬 빠름<br><br>
+      파일·사진·게임·운영체제가 모두 여기 저장돼요.`,
+    examples: [
+      { text:'HDD 1TB', cls:'' }, { text:'NVMe SSD', cls:'blue' },
+      { text:'USB 플래시', cls:'orange' }, { text:'DVD', cls:'purple' }
+    ]
+  },
+  input: {
+    slot: 'input', name: '입력 장치',
+    color: '#e65100',
+    analogy: { icon:'🎤', text:'컴퓨터에게 말을 거는 "입"' },
+    type: 'correct',
+    desc: `입력 장치는 사람이 컴퓨터에게 <strong>자료를 전달</strong>하는 장치입니다.<br><br>
+      📌 아날로그 신호(키 누름, 손 움직임)를 <strong>디지털 신호로 변환</strong><br>
+      📌 <strong>키보드</strong>: 문자·숫자 입력<br>
+      📌 <strong>마우스</strong>: 위치·클릭 입력<br>
+      📌 <strong>마이크</strong>: 소리 → 디지털 데이터<br><br>
+      터치스크린은 입력 장치와 출력 장치의 역할을 동시에 해요!`,
+    examples: [
+      { text:'키보드', cls:'' }, { text:'마우스', cls:'' },
+      { text:'터치스크린', cls:'blue' }, { text:'마이크', cls:'orange' },
+      { text:'스캐너', cls:'purple' }, { text:'웹캠', cls:'red' }
+    ]
+  },
+  output: {
+    slot: 'output', name: '출력 장치',
+    color: '#1565c0',
+    analogy: { icon:'📺', text:'컴퓨터의 "목소리 + 얼굴"' },
+    type: 'correct',
+    desc: `출력 장치는 컴퓨터가 처리한 결과를 사람이 <strong>알아볼 수 있게 표시</strong>하는 장치입니다.<br><br>
+      📌 디지털 데이터를 → 빛(화면)·소리·종이(인쇄) 등으로 변환<br>
+      📌 <strong>모니터</strong>: 시각 정보 출력<br>
+      📌 <strong>스피커</strong>: 소리 출력<br>
+      📌 <strong>프린터</strong>: 종이에 인쇄 출력<br><br>
+      VR 헤드셋도 출력 장치의 한 종류예요!`,
+    examples: [
+      { text:'모니터', cls:'' }, { text:'프린터', cls:'' },
+      { text:'스피커', cls:'blue' }, { text:'이어폰', cls:'blue' },
+      { text:'TV', cls:'orange' }, { text:'빔프로젝터', cls:'purple' }
+    ]
+  },
+  modem: {
+    slot: null, name: '모뎀 (신호 변환 장치)',
+    color: '#e64a19',
+    analogy: { icon:'🔄', text:'아날로그 ↔ 디지털 번역기' },
+    type: 'trap',
+    trapMsg: '⚠️ 정보 전송 시스템 장치 — 본체 밖!',
+    desc: `모뎀은 <strong>정보 전송 시스템</strong>의 장치로, 컴퓨터 본체 안에 들어가지 않아요!<br><br>
+      📌 컴퓨터(디지털 신호)를 통신 회선(아날로그)으로 변환<br>
+      📌 반대로 수신 시 아날로그 → 디지털로 역변환<br>
+      📌 인터넷에 연결할 때 외부에서 사용하는 장치<br><br>
+      <strong>정보 처리 시스템</strong>(컴퓨터 내부)과 <strong>정보 전송 시스템</strong>(통신 회선)을 연결해 주는 다리 역할이에요.`,
+    examples: [
+      { text:'DSL 모뎀', cls:'red' }, { text:'케이블 모뎀', cls:'red' },
+      { text:'ADSL 모뎀', cls:'red' }
+    ]
+  },
+  router: {
+    slot: null, name: '라우터 (통신 제어 장치)',
+    color: '#6a1b9a',
+    analogy: { icon:'🚦', text:'데이터를 안내하는 교통 신호기' },
+    type: 'trap',
+    trapMsg: '⚠️ 정보 전송 시스템 장치 — 본체 밖!',
+    desc: `라우터도 <strong>정보 전송 시스템</strong>의 장치로, 컴퓨터 본체 안에 들어가지 않아요!<br><br>
+      📌 여러 컴퓨터를 하나의 네트워크로 연결<br>
+      📌 데이터가 <strong>올바른 목적지에 도달</strong>하도록 경로 안내<br>
+      📌 집에서 사용하는 Wi-Fi 공유기가 바로 라우터<br><br>
+      라우터는 외부 네트워크(인터넷)와 내부 네트워크(집·학교)를 연결해 주는 장치예요.`,
+    examples: [
+      { text:'Wi-Fi 공유기', cls:'purple' }, { text:'네트워크 허브', cls:'purple' },
+      { text:'스위치', cls:'purple' }
+    ]
+  }
+};
 
+// ══════════════════════════════════════════
+//  SVG 주입
+// ══════════════════════════════════════════
+Object.keys(SVGS).forEach(key => {
+  const el = document.getElementById('tray-' + key);
+  if (el) el.innerHTML = SVGS[key];
+});
+
+// ══════════════════════════════════════════
+//  토스트
+// ══════════════════════════════════════════
+const toast = document.getElementById('toast');
 function showToast(text, cls = 'success') {
   toast.textContent = text;
   toast.className = 'toast show ' + cls;
-  setTimeout(() => { toast.className = 'toast'; }, 1800);
+  setTimeout(() => { toast.className = 'toast'; }, 2200);
 }
 
+// ══════════════════════════════════════════
+//  정보 패널 업데이트
+// ══════════════════════════════════════════
+const infoDefault = document.getElementById('infoDefault');
+const infoCard = document.getElementById('infoCard');
+
+function showInfoPanel(key) {
+  const p = PARTS[key];
+  if (!p) return;
+  infoDefault.style.display = 'none';
+  infoCard.classList.add('visible');
+
+  document.getElementById('infoSvgFrame').innerHTML = SVGS[key] || '';
+  document.getElementById('infoTitle').textContent = p.name;
+
+  const pillEl = document.getElementById('infoPill');
+  if (p.type === 'trap') {
+    pillEl.innerHTML = `<div class="trap-pill">⚠️ ${p.trapMsg}</div>
+      <div class="analogy-pill">${p.analogy.icon} ${p.analogy.text}</div>`;
+  } else {
+    pillEl.innerHTML = `<div class="analogy-pill">${p.analogy.icon} ${p.analogy.text}</div>`;
+  }
+
+  document.getElementById('infoDesc').innerHTML = p.desc;
+
+  const exRow = document.getElementById('infoExamples');
+  exRow.innerHTML = p.examples.map(e =>
+    `<span class="ex-tag ${e.cls}">${e.text}</span>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════
+//  진행률
+// ══════════════════════════════════════════
 function updateProgress() {
   const placed = document.querySelectorAll('.slot.filled-correct').length;
-  const total = 6;
-  progressFill.style.width = (placed / total * 100) + '%';
-  progressText.textContent = `${placed} / ${total}`;
-  if (placed === total) {
-    setTimeout(triggerBoot, 600);
+  document.getElementById('progressFill').style.width = (placed / 6 * 100) + '%';
+  document.getElementById('progressText').textContent = `${placed} / 6`;
+  if (placed === 6) setTimeout(triggerBoot, 700);
+}
+
+// ══════════════════════════════════════════
+//  슬롯 채우기
+// ══════════════════════════════════════════
+function placePart(part, slot) {
+  if (slot.classList.contains('filled-correct')) {
+    showToast('이 슬롯은 이미 완성됐어요!', 'error');
+    return;
+  }
+  const partKey = part.dataset.part;
+  const slotKey = slot.dataset.slot;
+  const info = PARTS[partKey];
+
+  showInfoPanel(partKey);
+
+  if (info.slot === slotKey) {
+    slot.classList.add('filled-correct');
+    const emoji = { cpu:'🧠', ram:'💾', mainboard:'🔌', storage:'🗄️', input:'⌨️', output:'🖥️' };
+    slot.innerHTML = `
+      <div class="placed-ico">${emoji[partKey] || '✅'}</div>
+      <div class="placed-name">${part.dataset.name}</div>
+      <div class="placed-ok">✅ 장착 완료!</div>`;
+    part.classList.add('used');
+    showToast(`✅ ${part.dataset.name} 장착 완료!`, 'success');
+    updateProgress();
+  } else {
+    slot.classList.add('filled-wrong');
+    setTimeout(() => slot.classList.remove('filled-wrong'), 500);
+    if (info.slot === null) {
+      showToast(`❌ ${part.dataset.name}은(는) 본체 부품이 아니에요!`, 'error');
+    } else {
+      showToast(`❌ 이 슬롯이 아니에요! 설명을 읽어보세요 😊`, 'error');
+    }
   }
 }
 
-function showInfo(part) {
-  const info = partDescriptions[part];
-  infoBox.innerHTML = `<strong>${info.title}</strong><br>${info.desc}`;
-}
-
-// Drag & drop
+// ══════════════════════════════════════════
+//  드래그 앤 드롭
+// ══════════════════════════════════════════
 let dragging = null;
-let selectedPart = null; // for touch/click mode
+let selectedPart = null;
 
 document.querySelectorAll('.part').forEach(p => {
   p.addEventListener('dragstart', e => {
     dragging = p;
     p.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    showInfo(p.dataset.part);
+    showInfoPanel(p.dataset.part);
   });
   p.addEventListener('dragend', () => {
     if (dragging) dragging.classList.remove('dragging');
     dragging = null;
   });
-  // Click/tap mode for touch devices
   p.addEventListener('click', () => {
     document.querySelectorAll('.part.selected').forEach(x => x.classList.remove('selected'));
     p.classList.add('selected');
-    p.style.outline = '4px solid var(--primary)';
     selectedPart = p;
-    showInfo(p.dataset.part);
-    showToast(`"${p.dataset.name}" 선택됨 · 슬롯을 탭하세요`);
+    showInfoPanel(p.dataset.part);
+    showToast(`"${p.dataset.name}" 선택됨 — 슬롯을 탭하세요`, 'success');
   });
 });
 
 document.querySelectorAll('.slot').forEach(slot => {
-  slot.addEventListener('dragover', e => {
-    e.preventDefault();
-    slot.classList.add('drag-over');
-  });
+  slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
   slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
   slot.addEventListener('drop', e => {
     e.preventDefault();
     slot.classList.remove('drag-over');
-    if (!dragging) return;
-    placePart(dragging, slot);
+    if (dragging) placePart(dragging, slot);
   });
   slot.addEventListener('click', () => {
     if (selectedPart) {
       placePart(selectedPart, slot);
       selectedPart.style.outline = '';
+      selectedPart.classList.remove('selected');
       selectedPart = null;
     }
   });
 });
 
-function placePart(part, slot) {
-  if (slot.classList.contains('filled-correct')) {
-    showToast('이 슬롯은 이미 완성되었습니다!', 'error');
-    return;
-  }
-  const partKey = part.dataset.part;
-  const slotKey = slot.dataset.slot;
-  const info = partDescriptions[partKey];
+// ══════════════════════════════════════════
+//  리셋
+// ══════════════════════════════════════════
+const SLOT_DEFAULTS = {
+  cpu:       ['🧠', '중앙 처리 장치', '제어 + 연산 담당'],
+  ram:       ['💾', '주기억 장치',    '임시 작업 공간'],
+  mainboard: ['🔌', '메인 보드',      '모든 부품을 연결'],
+  storage:   ['🗄️', '보조 기억 장치', '영구 저장'],
+  input:     ['⌨️', '입력 장치',      '키보드·마우스 등'],
+  output:    ['🖥️', '출력 장치',      '모니터·프린터 등'],
+};
 
-  if (info.slot === slotKey) {
-    // 정답
-    slot.classList.add('filled-correct');
-    slot.innerHTML = `
-      <div class="part-in-slot">${part.querySelector('.emoji').textContent}</div>
-      <div class="part-name">${part.dataset.name}</div>
-      <div class="slot-hint" style="color:rgba(255,255,255,0.7)">${slot.dataset.slot.toUpperCase()}</div>
-    `;
-    part.classList.add('used');
-    showToast(`✅ ${part.dataset.name} 장착 완료!`, 'success');
-    showInfo(partKey);
-    updateProgress();
-  } else {
-    // 오답
-    slot.classList.add('filled-wrong');
-    setTimeout(() => slot.classList.remove('filled-wrong'), 500);
-    if (info.slot === null) {
-      showToast(`❌ ${part.dataset.name}은(는) 컴퓨터 본체 부품이 아닙니다!`, 'error');
-    } else {
-      showToast(`❌ ${part.dataset.name}은(는) 이 자리가 아닙니다!`, 'error');
-    }
-    showInfo(partKey);
-  }
-}
-
-// Reset
 document.getElementById('resetBtn').addEventListener('click', () => {
   document.querySelectorAll('.slot').forEach(s => {
     s.classList.remove('filled-correct', 'filled-wrong');
-    const key = s.dataset.slot;
-    const labels = {
-      cpu: ['🧠 중앙 처리 장치', '제어·연산을 담당'],
-      ram: ['💾 주기억 장치', '일시적 기억'],
-      mainboard: ['🔌 메인 보드', '모든 장치를 연결'],
-      storage: ['🗄️ 보조 기억 장치', '영구 저장'],
-      input: ['⌨️ 입력 장치', '자료 입력'],
-      output: ['🖥️ 출력 장치', '결과 표시']
-    };
-    s.innerHTML = `<div class="slot-label">${labels[key][0]}</div><div class="slot-hint">${labels[key][1]}</div>`;
+    const d = SLOT_DEFAULTS[s.dataset.slot];
+    s.innerHTML = `<div class="slot-ico">${d[0]}</div><div class="slot-name">${d[1]}</div><div class="slot-hint">${d[2]}</div>`;
   });
-  document.querySelectorAll('.part').forEach(p => { p.classList.remove('used'); p.style.outline = ''; });
-  updateProgress();
+  document.querySelectorAll('.part').forEach(p => {
+    p.classList.remove('used', 'selected');
+    p.style.outline = '';
+  });
+  infoCard.classList.remove('visible');
+  infoDefault.style.display = '';
   document.getElementById('bootOverlay').classList.remove('show');
   document.getElementById('bootLines').innerHTML = '';
+  updateProgress();
 });
 
-// Boot animation
+// ══════════════════════════════════════════
+//  부트 애니메이션
+// ══════════════════════════════════════════
 async function triggerBoot() {
   const overlay = document.getElementById('bootOverlay');
   const lines = document.getElementById('bootLines');
   overlay.classList.add('show');
   lines.innerHTML = '';
 
-  const bootSeq = [
-    '> BIOS v2.26 loading...',
-    '> 메인보드 초기화... OK',
-    '> CPU 감지: 정상 (제어 기능 + 연산 기능)',
-    '> RAM 용량 확인... OK',
-    '> 보조 기억 장치 스캔... OK',
-    '> 입력 장치 연결: 키보드 ✓',
-    '> 출력 장치 연결: 모니터 ✓',
-    '> 모든 장치 정상 작동!',
-    '',
-    '🎉 축하합니다! 컴퓨터 조립 성공!',
-    '',
-    '정보 처리 시스템 = CPU + 주기억 + 보조기억 + 입력 + 출력',
-    '',
-    '[ESC 또는 다시 조립을 누르세요]'
+  const seq = [
+    { text: '> BIOS v2026.04 초기화 중...', color: '#51cf66' },
+    { text: '> 메인보드 감지...           [ OK ]', color: '#51cf66' },
+    { text: '> CPU 확인: 제어 + 연산 기능 정상', color: '#51cf66' },
+    { text: '> RAM 용량 확인: 16GB        [ OK ]', color: '#51cf66' },
+    { text: '> 보조 기억 장치 스캔: HDD   [ OK ]', color: '#51cf66' },
+    { text: '> 입력 장치: 키보드 연결됨   [ OK ]', color: '#51cf66' },
+    { text: '> 출력 장치: 모니터 연결됨   [ OK ]', color: '#51cf66' },
+    { text: '' },
+    { text: '🎉 모든 부품 정상! 컴퓨터 조립 성공!', color: '#ffd84d' },
+    { text: '' },
+    { text: '▶  정보 처리 시스템', color: '#4dabf7' },
+    { text: '   CPU + 주기억 + 보조기억 + 입력 + 출력', color: '#4dabf7' },
+    { text: '' },
+    { text: '▶  모뎀·라우터는 정보 전송 시스템!', color: '#ff8cc3' },
+    { text: '   컴퓨터 본체 밖에서 통신 회선을 연결', color: '#ff8cc3' },
   ];
 
-  for (const line of bootSeq) {
+  for (const item of seq) {
     const div = document.createElement('div');
-    div.textContent = line;
-    if (line.startsWith('🎉')) div.style.color = '#ffd84d';
-    if (line.startsWith('정보')) div.style.color = '#4dabf7';
+    div.textContent = item.text || '';
+    if (item.color) div.style.color = item.color;
     lines.appendChild(div);
-    await new Promise(r => setTimeout(r, 350));
+    await new Promise(r => setTimeout(r, 300));
   }
 }
 
+document.getElementById('bootCloseBtn').addEventListener('click', () => {
+  document.getElementById('bootOverlay').classList.remove('show');
+});
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.getElementById('bootOverlay').classList.remove('show');
-  }
+  if (e.key === 'Escape') document.getElementById('bootOverlay').classList.remove('show');
 });
 
 updateProgress();
 </script>
-
 </body>
 </html>

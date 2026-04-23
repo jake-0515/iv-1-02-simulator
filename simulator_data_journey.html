@@ -1,463 +1,930 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>시뮬레이터 1 · 데이터의 여행</title>
-<link rel="stylesheet" href="css/style.css">
-<style>
-  .controls {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-  .controls input[type="text"] {
-    flex: 1;
-    min-width: 240px;
-    padding: 14px 20px;
-    border: 2px solid var(--border);
-    border-radius: 999px;
-    font-size: 16px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .controls input[type="text"]:focus { border-color: var(--primary); }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>데이터의 여행 시뮬레이터</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    /* ─── 기본 ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .data-type-selector {
-    display: flex;
-    gap: 8px;
-  }
-  .data-type-selector label {
-    padding: 10px 16px;
-    border-radius: 999px;
-    border: 2px solid var(--border);
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 14px;
-    transition: all 0.2s;
-    background: white;
-  }
-  .data-type-selector input { display: none; }
-  .data-type-selector input:checked + span {
-    background: var(--primary);
-    color: white;
-    padding: 10px 16px;
-    margin: -10px -16px;
-    border-radius: 999px;
-  }
+    body {
+      font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+      font-size: 16px;
+      background: #f5f7fa;
+      color: #212529;
+      min-height: 100vh;
+    }
 
-  .pipeline {
-    position: relative;
-    background: white;
-    border-radius: 24px;
-    padding: 48px 24px;
-    border: 2px solid var(--border);
-    overflow-x: auto;
-    overflow-y: visible;
-    margin-bottom: 24px;
-  }
-  .stages {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
-    min-width: 860px;
-    position: relative;
-  }
-  .stage {
-    text-align: center;
-    padding: 16px 8px;
-    border: 2px solid #e5e5e5;
-    border-radius: 18px;
-    background: #fafafa;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    z-index: 2;
-  }
-  .stage:hover { transform: translateY(-3px); border-color: var(--primary); }
-  .stage.active {
-    background: linear-gradient(135deg, #fff4d6 0%, #ffe6a3 100%);
-    border-color: var(--primary);
-    transform: scale(1.05);
-    box-shadow: var(--shadow);
-  }
-  .stage.done {
-    background: #e3fcef;
-    border-color: var(--green);
-  }
-  .stage .emoji { font-size: 52px; display: block; }
-  .stage .name { font-weight: 800; font-size: 14px; margin-top: 6px; color: var(--text); }
-  .stage .system-tag {
-    display: block;
-    margin-top: 6px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    color: var(--primary-dark);
-  }
+    /* ─── 헤더 ─── */
+    .app-header {
+      background: var(--blue-dark, #1c7ed6);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    .app-header a.home-link {
+      color: #ffe066;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1.5px solid #ffe066;
+      border-radius: 6px;
+      padding: 3px 10px;
+      transition: background .2s;
+    }
+    .app-header a.home-link:hover { background: rgba(255,224,102,.15); }
+    .app-header h1 {
+      font-size: 20px;
+      font-weight: 800;
+      flex: 1;
+    }
+    .app-header .subtitle {
+      font-size: 13px;
+      opacity: .85;
+    }
 
-  /* Connection line */
-  .connector {
-    position: absolute;
-    top: 50%;
-    left: 4%;
-    right: 4%;
-    height: 8px;
-    background: linear-gradient(90deg, #eee, #eee);
-    border-radius: 4px;
-    z-index: 1;
-    transform: translateY(-50%);
-  }
-  .connector .fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--accent));
-    width: 0%;
-    transition: width 0.5s;
-    border-radius: 4px;
-  }
+    /* ─── 컨트롤 영역 ─── */
+    .controls {
+      background: #fff;
+      border-bottom: 2px solid #e9ecef;
+      padding: 16px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+    }
+    .controls label {
+      font-size: 15px;
+      font-weight: 700;
+      color: #495057;
+    }
+    .controls input[type="text"] {
+      font-size: 16px;
+      padding: 8px 14px;
+      border: 2px solid #ced4da;
+      border-radius: 8px;
+      width: 260px;
+      transition: border-color .2s;
+      outline: none;
+    }
+    .controls input[type="text"]:focus { border-color: var(--blue-dark, #1c7ed6); }
 
-  /* Moving packet */
-  .packet {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translate(-50%, -50%);
-    font-size: 32px;
-    z-index: 3;
-    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
-    opacity: 0;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-  }
-  .packet.visible { opacity: 1; }
+    .radio-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .radio-group .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .radio-group input[type="radio"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--blue-dark, #1c7ed6);
+      cursor: pointer;
+    }
+    .radio-group .radio-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: #495057;
+    }
 
-  /* System brackets */
-  .system-bracket {
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: 4fr 2fr;
-    gap: 8px;
-    min-width: 860px;
-  }
-  .bracket {
-    border: 2px solid;
-    border-radius: 14px;
-    padding: 10px;
-    text-align: center;
-    font-weight: 800;
-    font-size: 14px;
-  }
-  .bracket.transmit { border-color: var(--blue); color: var(--blue-dark); background: #e7f5ff; }
-  .bracket.process { border-color: var(--green-dark); color: var(--green-dark); background: #e3fcef; }
+    .btn {
+      font-size: 16px;
+      font-weight: 700;
+      padding: 9px 22px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform .1s, box-shadow .2s, background .2s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary {
+      background: var(--primary, #ffb400);
+      color: #3d2500;
+      box-shadow: 0 2px 8px rgba(255,180,0,.35);
+    }
+    .btn-primary:hover { background: #e6a200; }
+    .btn-primary:disabled {
+      background: #ced4da;
+      color: #868e96;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-secondary {
+      background: #e9ecef;
+      color: #343a40;
+    }
+    .btn-secondary:hover { background: #dee2e6; }
 
-  /* Log / explanation panel */
-  .info-panel {
-    background: white;
-    border-radius: 20px;
-    padding: 24px;
-    border: 2px solid var(--border);
-    min-height: 160px;
-  }
-  .info-panel h3 { color: var(--primary-dark); margin-bottom: 8px; font-size: 20px; }
-  .info-panel .meta { color: var(--text-light); font-size: 13px; margin-bottom: 12px; }
-  .info-panel .detail { line-height: 1.8; }
+    /* ─── 메인 컨테이너 ─── */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
 
-  /* Signal visualization in modem stage */
-  .signal-wave {
-    display: inline-block;
-    font-family: monospace;
-    font-weight: bold;
-    font-size: 11px;
-    margin-top: 4px;
-  }
+    /* ─── 4요소 / 전송시스템 안내 배너 ─── */
+    .concept-banner {
+      background: linear-gradient(135deg, #fff9e6 0%, #e8f4fd 100%);
+      border: 2px solid #ced4da;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #343a40;
+      line-height: 1.7;
+      text-align: center;
+    }
+    .concept-banner .banner-yellow { color: #7a5200; }
+    .concept-banner .banner-blue   { color: #1c5e9e; }
 
-  .legend {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-top: 16px;
-    flex-wrap: wrap;
-    font-size: 13px;
-    font-weight: 700;
-  }
-  .legend-item { display: flex; align-items: center; gap: 8px; }
-  .legend-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    border: 2px solid;
-  }
-  .legend-dot.process { background: #e3fcef; border-color: var(--green-dark); }
-  .legend-dot.transmit { background: #e7f5ff; border-color: var(--blue-dark); }
+    /* ─── 파이프라인 래퍼 ─── */
+    .pipeline-wrapper {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px 20px 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
 
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-    margin-top: 24px;
-  }
-  @media (min-width: 900px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
-</style>
+    /* system-bracket */
+    .system-brackets {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .system-bracket {
+      border-top: 3px solid;
+      border-left: 3px solid;
+      border-right: 3px solid;
+      border-radius: 8px 8px 0 0;
+      padding: 4px 16px 2px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      text-align: center;
+    }
+    .system-bracket.transmission {
+      border-color: #74c0fc;
+      color: #1c5e9e;
+      background: #e8f4fd;
+      flex: 3;
+    }
+    .system-bracket.processing {
+      border-color: var(--green, #51cf66);
+      color: #1a6b35;
+      background: #e6faf0;
+      flex: 1;
+    }
+
+    /* ─── 파이프라인 ─── */
+    .pipeline {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      position: relative;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .stage-wrapper {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* 연결선 */
+    .connector {
+      flex-shrink: 0;
+      width: 30px;
+      height: 4px;
+      background: linear-gradient(90deg, #ced4da, #adb5bd);
+      position: relative;
+      align-self: center;
+      margin-top: -20px;
+    }
+    .connector::after {
+      content: '';
+      position: absolute;
+      right: -7px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-left-color: #adb5bd;
+    }
+
+    /* 이동 패킷 */
+    .packet {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      background: var(--accent, #ff6b6b);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: #fff;
+      font-weight: 800;
+      box-shadow: 0 2px 8px rgba(255,107,107,.5);
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      top: 50%;
+      left: 0;
+      transform: translateY(calc(-50% - 20px));
+      transition: left .5s cubic-bezier(.4,0,.2,1), opacity .3s;
+    }
+
+    /* ─── stage 카드 ─── */
+    .stage {
+      flex: 1;
+      min-width: 120px;
+      max-width: 170px;
+      border: 3px solid #ced4da;
+      border-radius: 14px;
+      padding: 14px 10px 12px;
+      cursor: pointer;
+      background: #f8f9fa;
+      transition: transform .15s, box-shadow .2s, border-color .2s, background .2s;
+      text-align: center;
+      position: relative;
+      user-select: none;
+    }
+    .stage:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,.12);
+    }
+    .stage.active {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.18);
+    }
+    .stage.done { opacity: .7; }
+
+    /* 4요소 (노란 테두리) */
+    .stage[data-stage="0"],
+    .stage[data-stage="3"],
+    .stage[data-stage="5"] {
+      border-color: #ffd84d;
+      background: #fffdf0;
+    }
+    .stage[data-stage="0"].active,
+    .stage[data-stage="3"].active,
+    .stage[data-stage="5"].active {
+      border-color: #ffb400;
+      background: #fff8d6;
+      box-shadow: 0 8px 28px rgba(255,180,0,.3);
+    }
+
+    /* 전송 시스템 (파란 테두리) */
+    .stage[data-stage="1"],
+    .stage[data-stage="2"],
+    .stage[data-stage="4"] {
+      border-color: #74c0fc;
+      background: #f0f8ff;
+    }
+    .stage[data-stage="1"].active,
+    .stage[data-stage="2"].active,
+    .stage[data-stage="4"].active {
+      border-color: #1c7ed6;
+      background: #dbeeff;
+      box-shadow: 0 8px 28px rgba(28,126,214,.25);
+    }
+
+    .stage .emoji {
+      font-size: 64px;
+      line-height: 1.1;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .stage .name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #212529;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .stage .system-tag {
+      font-size: 13px;
+      color: #6c757d;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    /* 진행 표시 점 */
+    .stage .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #dee2e6;
+      margin: 8px auto 0;
+      transition: background .3s;
+    }
+    .stage.active .progress-dot { background: var(--primary, #ffb400); }
+    .stage.done   .progress-dot { background: var(--green, #51cf66); }
+
+    /* ─── 하단 2열 그리드 ─── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 820px) {
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ─── 정보 패널 ─── */
+    .info-panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      min-height: 280px;
+    }
+    .info-panel .placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 220px;
+      color: #adb5bd;
+      font-size: 15px;
+      gap: 10px;
+      text-align: center;
+    }
+    .info-panel .placeholder .big-icon { font-size: 48px; }
+    .info-panel h3 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #212529;
+      margin-bottom: 10px;
+    }
+    .info-panel .analogy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff4d6;
+      border: 2px solid #ffb400;
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #7a5200;
+      margin-bottom: 14px;
+    }
+    .info-panel .detail {
+      font-size: 16px;
+      line-height: 1.85;
+      color: #343a40;
+    }
+
+    /* ─── 전송 로그 패널 ─── */
+    .log-panel {
+      background: #1a1d23;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.18);
+      display: flex;
+      flex-direction: column;
+    }
+    .log-panel .log-title {
+      color: #74c0fc;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .log-panel .log-title .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green, #51cf66);
+      animation: blink 1.4s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    #log {
+      flex: 1;
+      font-size: 15px;
+      line-height: 1.8;
+      font-family: 'Consolas', 'Courier New', monospace;
+      color: #ced4da;
+      max-height: 320px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #495057 #1a1d23;
+    }
+    #log::-webkit-scrollbar { width: 6px; }
+    #log::-webkit-scrollbar-thumb { background: #495057; border-radius: 3px; }
+
+    .log-line         { padding: 1px 0; }
+    .log-line.info    { color: #74c0fc; }
+    .log-line.success { color: var(--green, #51cf66); }
+    .log-line.warn    { color: #ffd84d; }
+    .log-line.error   { color: var(--accent, #ff6b6b); }
+    .log-line.muted   { color: #6c757d; }
+
+    /* ─── 토스트 ─── */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #212529;
+      color: #fff;
+      padding: 12px 26px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(0,0,0,.35);
+      transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .35s;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ─── 반응형 ─── */
+    @media (max-width: 900px) {
+      .stage .emoji  { font-size: 44px; }
+      .stage .name   { font-size: 14px; }
+      .stage         { min-width: 90px; padding: 10px 6px 10px; }
+      .connector     { width: 18px; }
+    }
+  </style>
 </head>
 <body>
 
+<!-- ─── 헤더 ─── -->
 <header class="app-header">
-  <div>
-    <h1>🛰️ 데이터의 여행 시뮬레이터</h1>
-    <div class="subtitle">정보 통신 기술의 4요소 &amp; 전송 시스템 체험</div>
-  </div>
-  <nav><a href="index.html">🏠 홈</a></nav>
+  <a href="../index.html" class="home-link">🏠 홈</a>
+  <h1>📦 데이터의 여행 시뮬레이터</h1>
+  <span class="subtitle">중학교 3학년 기술 · IV-1 정보 통신 기술</span>
 </header>
 
-<div class="container">
+<!-- ─── 컨트롤 영역 ─── -->
+<div class="controls">
+  <label for="msgInput">💬 메시지:</label>
+  <input type="text" id="msgInput" placeholder="전송할 메시지를 입력하세요" value="안녕하세요!" maxlength="40" />
 
-  <div class="card" style="margin-bottom:24px">
-    <div class="controls">
-      <input type="text" id="messageInput" placeholder="친구에게 보낼 메시지를 입력하세요..." value="안녕! 기술 시간 재밌다 😊" maxlength="60">
-      <div class="data-type-selector">
-        <label><input type="radio" name="dtype" value="📄 텍스트" checked><span>📄 텍스트</span></label>
-        <label><input type="radio" name="dtype" value="🖼️ 이미지"><span>🖼️ 이미지</span></label>
-        <label><input type="radio" name="dtype" value="🎵 음성"><span>🎵 음성</span></label>
-        <label><input type="radio" name="dtype" value="🎬 영상"><span>🎬 영상</span></label>
-      </div>
-      <button class="btn btn-accent" id="startBtn">🚀 전송 시작</button>
-      <button class="btn btn-secondary" id="resetBtn">↺ 초기화</button>
-    </div>
-
-    <div class="pipeline">
-      <div class="stages" id="stages">
-        <div class="connector"><div class="fill" id="connFill"></div></div>
-        <div class="packet" id="packet">📦</div>
-
-        <div class="stage" data-stage="0">
-          <span class="emoji">👩‍💻</span>
-          <div class="name">정보원<br>(송신자)</div>
-          <span class="system-tag">4요소</span>
-        </div>
-        <div class="stage" data-stage="1">
-          <span class="emoji">⌨️</span>
-          <div class="name">단말 장치</div>
-          <span class="system-tag">전송 시스템</span>
-        </div>
-        <div class="stage" data-stage="2">
-          <span class="emoji">📠</span>
-          <div class="name">신호 변환 장치<br>(모뎀)</div>
-          <span class="system-tag">전송 시스템</span>
-        </div>
-        <div class="stage" data-stage="3">
-          <span class="emoji">🌐</span>
-          <div class="name">전송 회선</div>
-          <span class="system-tag">4요소 · 전송 매체</span>
-        </div>
-        <div class="stage" data-stage="4">
-          <span class="emoji">🖧</span>
-          <div class="name">통신 제어 장치</div>
-          <span class="system-tag">전송 시스템</span>
-        </div>
-        <div class="stage" data-stage="5">
-          <span class="emoji">🧑‍🎓</span>
-          <div class="name">정보 목적지<br>(수신자)</div>
-          <span class="system-tag">4요소</span>
-        </div>
-      </div>
-
-      <div class="system-bracket">
-        <div class="bracket transmit">📡 정보 전송 시스템</div>
-        <div class="bracket process">💻 정보 처리 시스템 (수신 측)</div>
-      </div>
-
-      <div class="legend">
-        <div class="legend-item"><span class="legend-dot transmit"></span>정보 전송 시스템</div>
-        <div class="legend-item"><span class="legend-dot process"></span>정보 처리 시스템</div>
-      </div>
-    </div>
-
+  <div class="radio-group">
+    <span style="font-size:15px;font-weight:700;color:#495057">데이터 유형:</span>
+    <label class="radio-item">
+      <input type="radio" name="dataType" value="문자 메시지" checked />
+      <span class="radio-label">💬 문자</span>
+    </label>
+    <label class="radio-item">
+      <input type="radio" name="dataType" value="이미지 파일" />
+      <span class="radio-label">🖼️ 이미지</span>
+    </label>
+    <label class="radio-item">
+      <input type="radio" name="dataType" value="동영상 파일" />
+      <span class="radio-label">🎬 동영상</span>
+    </label>
+    <label class="radio-item">
+      <input type="radio" name="dataType" value="음성 파일" />
+      <span class="radio-label">🎵 음성</span>
+    </label>
   </div>
 
-  <div class="grid-2">
-    <div class="info-panel" id="infoPanel">
-      <h3 id="infoTitle">💡 각 단계를 클릭하거나 "🚀 전송 시작"을 눌러보세요</h3>
-      <div class="meta" id="infoMeta">정보가 이동하는 과정을 단계별로 확인할 수 있습니다.</div>
-      <div class="detail" id="infoDetail">
-        메시지를 입력하고 <strong>전송 시작</strong>을 누르면 데이터가 정보원에서 정보 목적지까지 여행합니다.<br>
-        각 단계의 아이콘을 클릭하면 해당 장치의 역할을 자세히 볼 수 있어요.
-      </div>
-    </div>
-
-    <div class="info-panel" id="logPanel">
-      <h3>📋 전송 로그</h3>
-      <div class="meta">데이터가 거치는 경로가 기록됩니다.</div>
-      <div id="log" style="font-family:monospace;font-size:13px;line-height:1.8;min-height:100px;"></div>
-    </div>
-  </div>
-
+  <button class="btn btn-primary" id="btnStart" onclick="startSimulation()">▶ 전송 시작</button>
+  <button class="btn btn-secondary" id="btnReset" onclick="resetSimulation()">↺ 초기화</button>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- ─── 메인 ─── -->
+<div class="main">
+
+  <!-- 안내 배너 -->
+  <div class="concept-banner">
+    <span class="banner-yellow">📍 4요소: 정보원 &nbsp;·&nbsp; 정보 대상물 &nbsp;·&nbsp; 전송 매체 &nbsp;·&nbsp; 정보 목적지</span>
+    &nbsp;&nbsp;|&nbsp;&nbsp;
+    <span class="banner-blue">📡 정보 전송 시스템: 단말장치 &nbsp;·&nbsp; 신호변환장치 &nbsp;·&nbsp; 전송회선 &nbsp;·&nbsp; 통신제어장치</span>
+  </div>
+
+  <!-- 파이프라인 래퍼 -->
+  <div class="pipeline-wrapper">
+
+    <!-- 시스템 브래킷 -->
+    <div class="system-brackets">
+      <div class="system-bracket transmission">📡 정보 전송 시스템 (단말장치 · 신호변환 · 전송회선 · 통신제어)</div>
+      <div class="system-bracket processing">🖥️ 정보 처리 시스템</div>
+    </div>
+
+    <!-- 파이프라인 + 패킷 컨테이너 -->
+    <div style="position:relative">
+      <div class="pipeline" id="pipeline">
+
+        <!-- Stage 0: 정보원 -->
+        <div class="stage-wrapper">
+          <div class="stage" data-stage="0" onclick="showStageInfo(0)">
+            <span class="emoji">👩‍💻</span>
+            <div class="name">정보원<br>(송신자)</div>
+            <div class="system-tag">📍 4요소 ①</div>
+            <div class="progress-dot"></div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <!-- Stage 1: 단말 장치 -->
+        <div class="stage-wrapper">
+          <div class="stage" data-stage="1" onclick="showStageInfo(1)">
+            <span class="emoji">⌨️</span>
+            <div class="name">단말<br>장치</div>
+            <div class="system-tag">📡 전송 시스템</div>
+            <div class="progress-dot"></div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <!-- Stage 2: 신호 변환 (모뎀) -->
+        <div class="stage-wrapper">
+          <div class="stage" data-stage="2" onclick="showStageInfo(2)">
+            <span class="emoji">📠</span>
+            <div class="name">신호 변환<br>(모뎀)</div>
+            <div class="system-tag">📡 전송 시스템</div>
+            <div class="progress-dot"></div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <!-- Stage 3: 전송 회선 -->
+        <div class="stage-wrapper">
+          <div class="stage" data-stage="3" onclick="showStageInfo(3)">
+            <span class="emoji">🌐</span>
+            <div class="name">전송 회선<br>(통신 회선)</div>
+            <div class="system-tag">📍 4요소 ③</div>
+            <div class="progress-dot"></div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <!-- Stage 4: 통신 제어 장치 -->
+        <div class="stage-wrapper">
+          <div class="stage" data-stage="4" onclick="showStageInfo(4)">
+            <span class="emoji">🖧</span>
+            <div class="name">통신 제어<br>장치</div>
+            <div class="system-tag">📡 전송 시스템</div>
+            <div class="progress-dot"></div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+
+        <!-- Stage 5: 정보 목적지 -->
+        <div class="stage-wrapper">
+          <div class="stage" data-stage="5" onclick="showStageInfo(5)">
+            <span class="emoji">🧑‍🎓</span>
+            <div class="name">정보 목적지<br>(수신자)</div>
+            <div class="system-tag">📍 4요소 ④</div>
+            <div class="progress-dot"></div>
+          </div>
+        </div>
+
+      </div><!-- /.pipeline -->
+
+      <!-- 이동 패킷 -->
+      <div class="packet" id="packet">📦</div>
+    </div>
+
+  </div><!-- /.pipeline-wrapper -->
+
+  <!-- 하단 2열 그리드 -->
+  <div class="bottom-grid">
+
+    <!-- 정보 패널 -->
+    <div class="info-panel" id="infoPanel">
+      <div class="placeholder" id="infoPlaceholder">
+        <span class="big-icon">🗺️</span>
+        <span>단계 카드를 클릭하거나<br>전송 시작 버튼을 눌러 여정을 시작하세요!</span>
+      </div>
+      <div id="infoContent" style="display:none">
+        <h3 id="infoTitle"></h3>
+        <div class="analogy-badge" id="infoAnalogy"></div>
+        <div class="detail" id="infoDetail"></div>
+      </div>
+    </div>
+
+    <!-- 전송 로그 -->
+    <div class="log-panel">
+      <div class="log-title">
+        <span class="dot"></span>
+        전송 로그 (Terminal)
+      </div>
+      <div id="log">
+        <div class="log-line muted">// 전송 시작 버튼을 누르면 로그가 기록됩니다.</div>
+      </div>
+    </div>
+
+  </div><!-- /.bottom-grid -->
+
+</div><!-- /.main -->
+
+<!-- 토스트 -->
+<div id="toast"></div>
 
 <script>
+/* ─────────────────────────────────────────
+   stageData — 각 단계 상세 정보
+───────────────────────────────────────── */
 const stageData = [
   {
     title: "1️⃣ 정보원 (송신자)",
-    tag: "4요소 · 송신자",
+    tag: "📍 4요소 ① — 정보를 만들어 보내는 곳",
     emoji: "👩‍💻",
-    detail: `정보를 <strong>만들어 보내는 장소 또는 사람</strong>입니다.<br>
-             예: 메시지를 입력하는 학생, 데이터를 보내는 서버.<br>
-             👉 입력한 <strong>"{MSG}"</strong>이(가) 정보 대상물({TYPE})로 준비되었습니다.`
+    analogy: "📱 나 = 정보원!",
+    detail: `정보를 <strong>만들어 전송하는 사람 또는 장치</strong>입니다.<br><br>
+🔹 내가 카톡 메시지를 입력하는 순간, 나는 정보원이 돼요!<br>
+🔹 유튜브에서 영상을 올리는 유튜버도 정보원<br>
+🔹 날씨 정보를 보내는 기상청 서버도 정보원<br><br>
+👉 입력한 <strong>"{MSG}"</strong>({TYPE})이(가) 여정을 시작합니다.`
   },
   {
     title: "2️⃣ 단말 장치",
-    tag: "정보 전송 시스템",
+    tag: "📡 정보 전송 시스템 — 정보 수집 장치",
     emoji: "⌨️",
-    detail: `많은 자료 속에서 <strong>목적에 맞는 정보를 만들기 위해 수집하는 장치</strong>입니다.<br>
-             예: <strong>마이크 · 디지털 카메라 · 캠코더 · 키보드</strong> 등.<br>
-             👉 "{MSG}"을(를) 컴퓨터가 이해하는 형태로 준비합니다.`
+    analogy: "🎤 아날로그를 디지털로 변환하는 입구",
+    detail: `사람이 입력한 자료를 <strong>컴퓨터가 이해할 수 있는 형태로 변환</strong>하는 장치입니다.<br><br>
+🔹 <strong>키보드</strong>: 키 누름 → 전기 신호<br>
+🔹 <strong>디지털 카메라</strong>: 빛 → 디지털 이미지<br>
+🔹 <strong>마이크</strong>: 소리(아날로그) → 디지털 음성<br>
+🔹 <strong>캠코더</strong>: 영상 → 디지털 데이터<br><br>
+👉 "{MSG}"을(를) 전송 가능한 신호로 변환 중...`
   },
   {
     title: "3️⃣ 신호 변환 장치 (모뎀)",
-    tag: "정보 전송 시스템",
+    tag: "📡 정보 전송 시스템 — 아날로그 ↔ 디지털 변환",
     emoji: "📠",
-    detail: `단말기에서 받은 <strong>아날로그 신호</strong>를 통신 회선으로 전송할 수 있는
-             <strong>디지털 신호</strong>로 변환해 주는 장치입니다.<br>
-             예: <strong>전화기, 모뎀</strong>.<br>
-             <span class="signal-wave">∿∿∿ (아날로그)  →  01001011 (디지털)</span>`
+    analogy: "🔄 한국어 ↔ 영어 번역기처럼!",
+    detail: `통신 회선에 맞게 <strong>신호 형식을 변환</strong>하는 장치입니다.<br><br>
+🔹 컴퓨터는 디지털(0/1), 전화선은 아날로그 — 모뎀이 번역!<br>
+🔹 <strong>송신</strong>: 디지털 → 아날로그로 변환 후 전송<br>
+🔹 <strong>수신</strong>: 아날로그 → 디지털로 역변환<br><br>
+<span style="font-family:monospace;color:#1c7ed6;font-size:14px">∿∿∿ 아날로그 → 01001011 디지털</span><br><br>
+👉 데이터를 전송 회선용 신호로 변환 완료!`
   },
   {
     title: "4️⃣ 전송 회선 (통신 회선)",
-    tag: "4요소 · 전송 매체",
+    tag: "📍 4요소 ③ — 전송 매체",
     emoji: "🌐",
-    detail: `정보를 전송하기 위한 <strong>전기적 신호가 이동하는 통로</strong>입니다.
-             송신기·전송로·수신기로 구성됩니다.<br>
-             예: <strong>동축 케이블, 광 케이블</strong>, 무선 전파.<br>
-             👉 디지털로 변환된 데이터가 빛의 속도로 달리는 중!`
+    analogy: "🛣️ 데이터가 달리는 고속도로!",
+    detail: `전기적 또는 광학적 신호가 <strong>이동하는 물리적 통로</strong>입니다.<br><br>
+🔹 <strong>광 케이블</strong>: 빛 신호, 초고속 (수백 Gbps), 바다 밑에도!<br>
+🔹 <strong>동축 케이블</strong>: 전기 신호, TV 케이블로 많이 사용<br>
+🔹 <strong>무선 전파</strong>: Wi-Fi, LTE, 5G<br>
+🔹 <strong>위성</strong>: 우주를 경유해 전 세계로<br><br>
+👉 "{MSG}"이(가) 광속으로 이동 중... 🚀`
   },
   {
     title: "5️⃣ 통신 제어 장치",
-    tag: "정보 전송 시스템",
+    tag: "📡 정보 전송 시스템 — 경로 제어",
     emoji: "🖧",
-    detail: `컴퓨터와 정보 통신망 사이에 <strong>정보를 전송할 수 있는 통로를 만드는 장치</strong>입니다.<br>
-             예: <strong>라우터, 스위치, 게이트웨이</strong>.<br>
-             👉 수많은 데이터 중 이 메시지를 올바른 수신자에게 보냅니다.`
+    analogy: "🚦 데이터 우체국 + 교통 신호기",
+    detail: `수많은 컴퓨터 중에서 <strong>올바른 목적지까지 데이터를 안내</strong>하는 장치입니다.<br><br>
+🔹 <strong>라우터</strong>: 데이터 패킷의 최적 경로 결정 (집 공유기!)<br>
+🔹 <strong>스위치</strong>: 같은 네트워크 내 장치 간 데이터 전달<br>
+🔹 <strong>게이트웨이</strong>: 서로 다른 네트워크 연결<br><br>
+인터넷에서 데이터는 한 번에 가지 않고 여러 라우터를 거쳐 이동해요!<br><br>
+👉 수신자 컴퓨터로 경로 설정 완료!`
   },
   {
     title: "6️⃣ 정보 목적지 (수신자)",
-    tag: "4요소 · 수신자",
+    tag: "📍 4요소 ④ — 정보를 받는 곳",
     emoji: "🧑‍🎓",
-    detail: `정보를 <strong>받아야 하는 장소 또는 사람</strong>입니다.<br>
-             수신자의 컴퓨터는 <strong>정보 처리 시스템</strong>(CPU, RAM, 저장 장치, 출력 장치)을 거쳐
-             "{MSG}" 메시지를 화면에 표시합니다.<br>
-             ✅ 전송 완료!`
+    analogy: "📬 편지를 받는 사람!",
+    detail: `정보를 <strong>최종적으로 받아 처리하는 사람 또는 장치</strong>입니다.<br><br>
+🔹 수신자의 기기에서 정보 처리 시스템이 작동해요:<br>
+&nbsp;&nbsp;&nbsp;CPU → RAM → 보조기억장치 → 출력장치<br>
+🔹 모뎀이 신호를 역변환 → 컴퓨터가 해석 → 화면 표시<br><br>
+<strong>🔁 정보 통신 4요소 복습</strong><br>
+정보원 → 정보 대상물 → 전송 매체 → 정보 목적지<br><br>
+✅ <strong>"{MSG}"</strong> 전송 완료! 🎉`
   }
 ];
 
-const stages = document.querySelectorAll('.stage');
-const packet = document.getElementById('packet');
-const connFill = document.getElementById('connFill');
-const infoTitle = document.getElementById('infoTitle');
-const infoMeta = document.getElementById('infoMeta');
-const infoDetail = document.getElementById('infoDetail');
-const logEl = document.getElementById('log');
-const toast = document.getElementById('toast');
+/* ─────────────────────────────────────────
+   로그 메시지 배열 (단계별)
+───────────────────────────────────────── */
+const logMessages = [
+  [
+    { cls: 'warn',    text: '[START] 새 데이터 전송 세션 시작' },
+    { cls: 'info',    text: '[INFO]  정보원(송신자) 단계 활성화' },
+    { cls: '',        text: '[DATA]  메시지: "{MSG}" ({TYPE})' },
+    { cls: 'success', text: '[OK]    정보원 → 데이터 생성 완료' }
+  ],
+  [
+    { cls: 'info', text: '[NEXT]  단말 장치 단계 이동' },
+    { cls: '',     text: '[CONV]  아날로그 입력 → 디지털 신호 변환 중...' },
+    { cls: '',     text: '[BITS]  01001000 01100101 01101100 01101100 01101111' },
+    { cls: 'success', text: '[OK]    디지털 변환 완료 ✓' }
+  ],
+  [
+    { cls: 'info', text: '[NEXT]  신호 변환 장치(모뎀) 단계 이동' },
+    { cls: '',     text: '[MODEM] 디지털 신호 → 아날로그 파형 변조 중...' },
+    { cls: '',     text: '[WAVE]  ∿∿∿∿∿ 변조 완료 ∿∿∿∿∿' },
+    { cls: 'success', text: '[OK]    신호 변환 완료 ✓' }
+  ],
+  [
+    { cls: 'info', text: '[NEXT]  전송 회선 단계 이동' },
+    { cls: '',     text: '[ROUTE] 광 케이블 경로 선택됨 (속도: 1Gbps)' },
+    { cls: '',     text: '[SEND]  패킷 전송 중... ████████░░ 80%' },
+    { cls: 'success', text: '[OK]    전송 완료 ✓ 지연: 12ms' }
+  ],
+  [
+    { cls: 'info', text: '[NEXT]  통신 제어 장치 단계 이동' },
+    { cls: '',     text: '[ROUTE] 라우터: 최적 경로 탐색 중...' },
+    { cls: '',     text: '[HOP]   192.168.1.1 → 10.0.0.1 → 목적지' },
+    { cls: 'success', text: '[OK]    경로 설정 완료 ✓ (홉 수: 3)' }
+  ],
+  [
+    { cls: 'info',    text: '[NEXT]  정보 목적지(수신자) 도착!' },
+    { cls: '',        text: '[RECV]  수신자 단말에서 신호 수신 중...' },
+    { cls: '',        text: '[DEMOD] 아날로그 → 디지털 역변환 완료' },
+    { cls: 'success', text: '[DONE]  ✅ 전송 성공! "{MSG}" 도착 완료 🎉' }
+  ]
+];
 
-let isPlaying = false;
+/* ─────────────────────────────────────────
+   상태 변수
+───────────────────────────────────────── */
+let currentStep = -1;
+let isRunning   = false;
+let animTimer   = null;
 
-function showInfo(i, msg, type) {
-  const d = stageData[i];
-  infoTitle.textContent = d.title;
-  infoMeta.textContent = d.tag;
-  infoDetail.innerHTML = d.detail.replaceAll('{MSG}', msg).replaceAll('{TYPE}', type);
+/* ─────────────────────────────────────────
+   유틸
+───────────────────────────────────────── */
+function getMsg()  { return document.getElementById('msgInput').value.trim() || '(빈 메시지)'; }
+function getType() { return document.querySelector('input[name="dataType"]:checked').value; }
+
+function fillTemplate(str) {
+  return str.replace(/\{MSG\}/g, getMsg()).replace(/\{TYPE\}/g, getType());
 }
 
-function showToast(text, cls = 'success') {
-  toast.textContent = text;
-  toast.className = 'toast show ' + cls;
-  setTimeout(() => { toast.className = 'toast'; }, 2200);
+function showToast(msg, duration) {
+  duration = duration || 2200;
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, duration);
 }
 
-function movePacketTo(i) {
-  const stage = stages[i];
-  const rect = stage.getBoundingClientRect();
-  const parent = stage.parentElement.getBoundingClientRect();
-  const leftPct = ((rect.left + rect.width/2) - parent.left) / parent.width * 100;
-  packet.style.left = leftPct + '%';
-  packet.classList.add('visible');
+function addLog(cls, text) {
+  const log = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = 'log-line' + (cls ? ' ' + cls : '');
+  div.textContent = fillTemplate(text);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
 }
 
-function clearStages() {
-  stages.forEach(s => s.classList.remove('active', 'done'));
-  connFill.style.width = '0%';
-  packet.classList.remove('visible');
-  logEl.innerHTML = '';
+/* ─────────────────────────────────────────
+   정보 패널
+───────────────────────────────────────── */
+function showStageInfo(idx) {
+  const data = stageData[idx];
+  document.getElementById('infoPlaceholder').style.display = 'none';
+  document.getElementById('infoContent').style.display = 'block';
+  document.getElementById('infoTitle').textContent = data.title;
+  document.getElementById('infoAnalogy').textContent = data.analogy;
+  document.getElementById('infoDetail').innerHTML = fillTemplate(data.detail);
+
+  document.querySelectorAll('.stage').forEach(function(el, i) {
+    el.classList.toggle('active', i === idx);
+  });
 }
 
-function addLog(text) {
-  const time = new Date().toLocaleTimeString('ko-KR', { hour12: false });
-  logEl.innerHTML += `<div>[${time}] ${text}</div>`;
-  logEl.scrollTop = logEl.scrollHeight;
+/* ─────────────────────────────────────────
+   패킷 애니메이션
+───────────────────────────────────────── */
+function movePacket(stageIdx, callback) {
+  var stages    = document.querySelectorAll('.stage');
+  if (!stages[stageIdx]) { if (callback) callback(); return; }
+
+  var pipelineEl = document.getElementById('pipeline');
+  var packet     = document.getElementById('packet');
+  var stageRect  = stages[stageIdx].getBoundingClientRect();
+  var pipeRect   = pipelineEl.getBoundingClientRect();
+
+  var targetLeft = stageRect.left - pipeRect.left + stageRect.width / 2 - 14;
+
+  packet.style.opacity = '1';
+  packet.style.left    = targetLeft + 'px';
+
+  setTimeout(function() { if (callback) callback(); }, 520);
 }
 
-async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+/* ─────────────────────────────────────────
+   시뮬레이션 실행
+───────────────────────────────────────── */
+function startSimulation() {
+  if (isRunning) return;
 
-async function runSimulation() {
-  if (isPlaying) return;
-  isPlaying = true;
-
-  const msg = document.getElementById('messageInput').value.trim() || '안녕!';
-  const type = document.querySelector('input[name="dtype"]:checked').value;
-
-  clearStages();
-  addLog(`🚀 전송 시작 · 메시지: "${msg}" · 유형: ${type}`);
-
-  const packetIcon = { '📄 텍스트': '📄', '🖼️ 이미지': '🖼️', '🎵 음성': '🎵', '🎬 영상': '🎬' }[type] || '📦';
-  packet.textContent = packetIcon;
-
-  for (let i = 0; i < stages.length; i++) {
-    stages[i].classList.add('active');
-    movePacketTo(i);
-    connFill.style.width = ((i / (stages.length - 1)) * 100) + '%';
-
-    showInfo(i, msg, type);
-
-    const logMsg = {
-      0: `① 정보원: "${msg}" 준비 완료`,
-      1: `② 단말 장치: 입력 신호 수집`,
-      2: `③ 신호 변환 장치: 아날로그 → 디지털 (${'01'.repeat(Math.min(msg.length, 6))}...)`,
-      3: `④ 전송 회선: 데이터 전파 중 (~광속)`,
-      4: `⑤ 통신 제어 장치: 경로 제어 완료`,
-      5: `⑥ 정보 목적지: "${msg}" 수신 성공 ✅`
-    }[i];
-    addLog(logMsg);
-
-    await sleep(1200);
-    stages[i].classList.remove('active');
-    stages[i].classList.add('done');
+  var msg = getMsg();
+  if (!msg || msg === '(빈 메시지)') {
+    showToast('⚠️ 메시지를 입력해 주세요!');
+    document.getElementById('msgInput').focus();
+    return;
   }
 
-  showToast('🎉 전송 완료!', 'success');
-  isPlaying = false;
+  isRunning = true;
+  document.getElementById('btnStart').disabled = true;
+
+  document.getElementById('log').innerHTML = '';
+  document.querySelectorAll('.stage').forEach(function(el) {
+    el.classList.remove('active', 'done');
+  });
+
+  currentStep = 0;
+  runStep();
 }
 
-stages.forEach((s, i) => {
-  s.addEventListener('click', () => {
-    if (isPlaying) return;
-    const msg = document.getElementById('messageInput').value.trim() || '안녕!';
-    const type = document.querySelector('input[name="dtype"]:checked').value;
-    stages.forEach(x => x.classList.remove('active'));
-    s.classList.add('active');
-    showInfo(i, msg, type);
+function runStep() {
+  if (currentStep >= 6) {
+    finishSimulation();
+    return;
+  }
+
+  var idx    = currentStep;
+  var stages = document.querySelectorAll('.stage');
+
+  if (idx > 0) stages[idx - 1].classList.add('done');
+  stages[idx].classList.add('active');
+
+  movePacket(idx, function() {
+    showStageInfo(idx);
+
+    logMessages[idx].forEach(function(entry, i) {
+      setTimeout(function() { addLog(entry.cls, entry.text); }, i * 200);
+    });
+
+    var delay = (idx === 3 ? 2000 : 1500) + logMessages[idx].length * 200;
+    animTimer = setTimeout(function() {
+      currentStep++;
+      runStep();
+    }, delay);
   });
-});
+}
 
-document.getElementById('startBtn').addEventListener('click', runSimulation);
-document.getElementById('resetBtn').addEventListener('click', () => {
-  clearStages();
-  infoTitle.textContent = '💡 각 단계를 클릭하거나 "🚀 전송 시작"을 눌러보세요';
-  infoMeta.textContent = '정보가 이동하는 과정을 단계별로 확인할 수 있습니다.';
-  infoDetail.innerHTML = '메시지를 입력하고 <strong>전송 시작</strong>을 누르면 데이터가 정보원에서 정보 목적지까지 여행합니다.';
-});
+function finishSimulation() {
+  var stages = document.querySelectorAll('.stage');
+  stages[5].classList.remove('active');
+  stages[5].classList.add('done');
+
+  isRunning = false;
+  document.getElementById('btnStart').disabled = false;
+
+  showToast('✅ 데이터 전송 완료! 수신자에게 도착했어요 🎉', 3000);
+}
+
+/* ─────────────────────────────────────────
+   초기화
+───────────────────────────────────────── */
+function resetSimulation() {
+  if (animTimer) clearTimeout(animTimer);
+  isRunning   = false;
+  currentStep = -1;
+  document.getElementById('btnStart').disabled = false;
+
+  document.querySelectorAll('.stage').forEach(function(el) {
+    el.classList.remove('active', 'done');
+  });
+
+  var packet = document.getElementById('packet');
+  packet.style.opacity = '0';
+
+  document.getElementById('log').innerHTML =
+    '<div class="log-line muted">// 전송 시작 버튼을 누르면 로그가 기록됩니다.</div>';
+
+  document.getElementById('infoPlaceholder').style.display = 'flex';
+  document.getElementById('infoContent').style.display = 'none';
+
+  showToast('↺ 초기화 완료!');
+}
 </script>
-
 </body>
 </html>

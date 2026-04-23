@@ -6,6 +6,8 @@
 <title>학습활동 2 · 아날로그 ↔ 디지털 신호 변환</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
+  body { font-size: 16px; }
+
   .layout {
     display: grid;
     grid-template-columns: 1fr;
@@ -38,9 +40,10 @@
     display: flex;
     justify-content: space-between;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 15px;
     margin-bottom: 6px;
   }
+  .slider-group label span { font-size: 16px; font-weight: 900; color: var(--primary-dark); }
   .slider-group input[type=range] {
     width: 100%;
     accent-color: var(--primary);
@@ -52,7 +55,7 @@
     padding: 24px;
     border: 2px solid var(--border);
   }
-  .explanation h3 { color: var(--primary-dark); margin-bottom: 12px; }
+  .explanation h3 { color: var(--primary-dark); margin-bottom: 12px; font-size: 22px; }
 
   .step {
     background: #fff4d6;
@@ -60,14 +63,14 @@
     border-radius: 10px;
     padding: 14px 18px;
     margin: 10px 0;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 16px;
+    line-height: 1.75;
   }
-  .step strong { color: var(--primary-dark); }
+  .step strong { color: var(--primary-dark); font-size: 17px; }
 
   .binary-display {
     font-family: 'Courier New', monospace;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: bold;
     background: #1a1a1a;
     color: #51cf66;
@@ -110,6 +113,7 @@
     border-left: 6px solid var(--blue-dark);
   }
   .challenge h4 { color: var(--blue-dark); margin-bottom: 8px; }
+  .challenge ol li { font-size: 15px; line-height: 1.8; }
 </style>
 </head>
 <body>
@@ -166,32 +170,41 @@
 
       <div class="step">
         <strong>1️⃣ 아날로그 신호란?</strong><br>
-        소리·영상처럼 <strong>연속적으로 변하는 파형</strong>. 마이크·카메라에서 처음 만들어집니다.
+        소리·영상처럼 <strong>연속적으로 변하는 파형</strong>입니다.<br>마이크로 소리를 녹음하면, 공기 진동이 전기 파형(아날로그)으로 변해요.<br>파형이 높을수록 소리가 크고, 주파수가 높을수록 음이 높아요.
       </div>
 
       <div class="step">
         <strong>2️⃣ 샘플링 (Sampling)</strong><br>
-        파형의 높이를 <strong>일정 간격으로 측정</strong>합니다. 측정 횟수가 많을수록 원본에 가깝게 됩니다.
+        아날로그 파형의 높이를 <strong>일정 간격으로 측정</strong>하는 과정입니다.<br>샘플링 횟수가 많을수록 원본 파형에 더 가까워져요.<br>CD 음질(44,100회/초) vs MP3(압축) — 샘플링 수가 다를수록 음질이 달라져요!
       </div>
 
       <div class="step">
         <strong>3️⃣ 디지털 변환 (0/1)</strong><br>
-        측정값을 임계값과 비교해 <strong>1(높음) 또는 0(낮음)</strong>으로 바꿉니다.<br>
-        → 통신 회선(케이블/광)으로 전송 가능한 형태가 됩니다.
+        측정값을 임계값과 비교해 <strong>1(높음) 또는 0(낮음)</strong>으로 변환합니다.<br>이 2진수(비트) 데이터는 광케이블이나 Wi-Fi로 전송 가능해요.<br>모뎀이 바로 이 아날로그→디지털 변환을 담당합니다!
       </div>
 
       <div class="step">
-        <strong>4️⃣ 역변환 (수신측)</strong><br>
-        수신측 <strong>모뎀</strong>이 다시 디지털을 아날로그로 바꿔 스피커·모니터로 출력합니다.
+        <strong>4️⃣ 역변환 (수신측 모뎀)</strong><br>
+        수신 측 <strong>모뎀</strong>이 받은 디지털 신호(0/1)를 다시 아날로그로 바꿔요.<br>그 결과가 스피커나 모니터로 출력되어 우리 귀와 눈에 전달됩니다.<br>이 전체 과정이 <strong>1초에 수천~수백만 번</strong> 일어나요!
       </div>
 
       <div class="challenge">
         <h4>🎯 미션</h4>
-        <ol style="padding-left:20px;font-size:13px;line-height:1.7;">
-          <li>주파수를 최소(1 Hz)로 맞추고 샘플링을 32로 올려보세요. 디지털 신호가 더 부드러워지나요?</li>
-          <li>진폭을 낮추고 임계값을 올려보세요. 0이 많이 나올까요, 1이 많이 나올까요?</li>
-          <li>🎬 애니메이션 버튼으로 샘플링 과정을 천천히 관찰해 보세요.</li>
+        <ol style="padding-left:20px;">
+          <li><strong>샘플링을 4로 낮추고, 다시 32로 올려보세요.</strong><br>숫자가 클수록 디지털 신호가 원래 파형에 가까워지나요?</li>
+          <li><strong>진폭을 낮추고 임계값을 올려보세요.</strong><br>0이 많이 나올까요, 1이 많이 나올까요? 왜 그럴까요?</li>
+          <li><strong>🎬 애니메이션 버튼</strong>을 눌러 샘플링 과정을 천천히 관찰해 보세요.<br>샘플링 지점(노란 점)이 늘어날수록 어떻게 달라지나요?</li>
         </ol>
+      </div>
+
+      <div style="background:linear-gradient(135deg,#f3f0ff,#e5dbff);border-radius:16px;padding:18px 20px;margin-top:16px;border-left:6px solid #9775fa;">
+        <h4 style="color:#5f3dc4;font-size:17px;margin-bottom:10px;">📡 핵심 정리</h4>
+        <div style="font-size:15px;line-height:1.8;">
+          <strong>정보 전송 시스템에서 모뎀의 역할:</strong><br>
+          아날로그(전화선/케이블) ↔ 디지털(컴퓨터) 신호를 서로 변환<br><br>
+          <strong>샘플링 ↑</strong> = 더 정확한 디지털 변환 = 더 높은 음질/화질<br>
+          <strong>샘플링 ↓</strong> = 데이터 양이 줄어 전송이 빠름 (압축 원리)
+        </div>
       </div>
     </div>
 

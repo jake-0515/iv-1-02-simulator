@@ -26,6 +26,7 @@ html, body {
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
+  font-size: 16px;
 }
 
 h1, h2, h3 { font-weight: 800; letter-spacing: -0.02em; }
@@ -101,7 +102,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.02em; }
   display: inline-block;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   background: var(--primary);
   color: white;
@@ -118,12 +119,13 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.02em; }
   margin-bottom: 32px;
   border-left: 8px solid var(--primary);
 }
-.objective-box h2 { color: var(--primary-dark); font-size: 20px; margin-bottom: 12px; }
+.objective-box h2 { color: var(--primary-dark); font-size: 22px; margin-bottom: 12px; }
 .objective-box ul { list-style: none; padding: 0; }
 .objective-box li {
   padding: 6px 0 6px 28px;
   position: relative;
   font-weight: 600;
+  font-size: 16px;
 }
 .objective-box li::before {
   content: "🎯";
@@ -169,13 +171,13 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.02em; }
   display: block;
 }
 .activity-card h3 {
-  font-size: 22px;
+  font-size: 24px;
   margin-bottom: 10px;
   color: var(--text);
 }
 .activity-card p {
   color: var(--text-light);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.55;
 }
 .activity-card .go {

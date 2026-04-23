@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학습활동 3 · 정보 통신 기술 퀴즈</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .quiz-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .quiz-progress {
+    flex: 1;
+    min-width: 200px;
+    height: 12px;
+    background: #f1f1f1;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--green));
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .q-card {
+    background: white;
+    border-radius: 24px;
+    padding: 32px;
+    border: 2px solid var(--border);
+    min-height: 400px;
+  }
+
+  .q-number {
+    color: var(--primary-dark);
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .q-type-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-left: 8px;
+    background: var(--blue);
+    color: white;
+  }
+  .q-type-badge.ox { background: var(--accent); }
+  .q-type-badge.fill { background: var(--purple); }
+  .q-type-badge.case { background: var(--green-dark); }
+
+  .q-text {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+  .q-text .blank {
+    display: inline-block;
+    min-width: 100px;
+    padding: 4px 12px;
+    border-bottom: 3px dashed var(--primary);
+    color: var(--primary-dark);
+  }
+
+  .options {
+    display: grid;
+    gap: 10px;
+  }
+  .option {
+    background: #fafafa;
+    border: 2px solid #e5e5e5;
+    border-radius: 14px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .option:hover { border-color: var(--primary); background: #fff4d6; }
+  .option.selected { border-color: var(--primary); background: #fff4d6; }
+  .option.correct { border-color: var(--green); background: #d3f9d8; }
+  .option.wrong { border-color: var(--accent); background: #ffe3e3; }
+  .option .num {
+    width: 32px; height: 32px;
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    color: var(--primary-dark);
+    flex-shrink: 0;
+  }
+  .option.correct .num { background: var(--green); border-color: var(--green); color: white; }
+  .option.wrong .num { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .fill-input {
+    font-size: 20px;
+    padding: 12px 20px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 300px;
+    font-family: inherit;
+    outline: none;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+
+  .ox-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+  .ox-btn {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 4px solid;
+    background: white;
+    font-size: 64px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ox-btn.O { border-color: var(--green); color: var(--green-dark); }
+  .ox-btn.X { border-color: var(--accent); color: var(--accent); }
+  .ox-btn:hover { transform: scale(1.05); }
+  .ox-btn.selected { transform: scale(1.1); box-shadow: var(--shadow-lg); }
+
+  .explanation-box {
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: #fff4d6;
+    border-left: 6px solid var(--primary);
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.7;
+    display: none;
+  }
+  .explanation-box.show { display: block; }
+  .explanation-box.correct { background: #d3f9d8; border-left-color: var(--green); }
+  .explanation-box.wrong { background: #ffe3e3; border-left-color: var(--accent); }
+
+  .q-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .result-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .result-screen .big-medal { font-size: 120px; }
+  .result-screen h2 { font-size: 32px; margin: 12px 0; color: var(--primary-dark); }
+  .result-screen .big-score { font-size: 72px; font-weight: 900; color: var(--accent); margin: 16px 0; }
+
+  .review-list {
+    text-align: left;
+    max-width: 600px;
+    margin: 20px auto;
+    background: #fafafa;
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .review-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 14px;
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-item.correct::before { content: "✅"; }
+  .review-item.wrong::before { content: "❌"; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>🏆 정보 통신 기술 퀴즈</h1>
+    <div class="subtitle">10문제로 배운 내용을 점검해 보세요!</div>
+  </div>
+  <nav><a href="index.html">🏠 홈</a></nav>
+</header>
+
+<div class="container">
+
+  <div class="quiz-top">
+    <div>문제 <strong id="qCur">1</strong> / <strong id="qTotal">10</strong></div>
+    <div class="quiz-progress"><div class="quiz-progress-fill" id="quizProgress"></div></div>
+    <div>점수 <strong id="qScore">0</strong></div>
+  </div>
+
+  <div class="q-card" id="qCard"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const QUESTIONS = [
+  {
+    type: 'mc',
+    text: '정보 통신 기술의 <strong>4요소</strong>가 아닌 것은?',
+    options: ['정보원', '정보 대상물', '전송 매체', '<strong>중앙 처리 장치(CPU)</strong>'],
+    answer: 3,
+    explain: '정보 통신 기술의 4요소는 정보원, 정보 대상물, 전송 매체, 정보 목적지입니다. CPU는 "정보 처리 시스템"의 구성 요소입니다.'
+  },
+  {
+    type: 'case',
+    text: '카톡으로 친구에게 "안녕"이라고 보낼 때, <strong>"안녕"이라는 메시지</strong>는 4요소 중 무엇에 해당할까요?',
+    options: ['정보원', '정보 목적지', '<strong>정보 대상물</strong>', '전송 매체'],
+    answer: 2,
+    explain: '전달하려는 정보(텍스트, 이미지, 음성, 영상 등) 그 자체가 "정보 대상물"입니다. 메시지를 보내는 나는 정보원, 받는 친구는 정보 목적지입니다.'
+  },
+  {
+    type: 'mc',
+    text: '중앙 처리 장치(CPU)에 대한 설명으로 <strong>옳은 것</strong>은?',
+    options: [
+      '처리된 정보를 영구적으로 저장한다.',
+      '<strong>제어 기능과 연산 기능을 수행하는 장치</strong>이다.',
+      '문자, 그림, 음성을 컴퓨터가 이해할 수 있는 신호로 바꾼다.',
+      '정보 처리 결과를 인간이 볼 수 있도록 보여준다.'
+    ],
+    answer: 1,
+    explain: 'CPU는 입력된 정보를 처리하고 출력 장치로 보내는 과정을 제어·조종하는 장치로, 제어 기능과 연산 기능을 수행합니다. ①은 보조기억장치, ③은 입력장치, ④는 출력장치 설명입니다.'
+  },
+  {
+    type: 'ox',
+    text: '"신호 변환 장치(모뎀)"는 <strong>디지털 신호를 아날로그 신호로만 바꾸는</strong> 장치이다.',
+    answer: 'X',
+    explain: '모뎀은 양방향으로 작동합니다. 아날로그 → 디지털 (송신 시), 디지털 → 아날로그 (수신 시) 모두 변환할 수 있어야 통신이 가능합니다.'
+  },
+  {
+    type: 'fill',
+    text: '정보 처리 시스템의 구성 중 <span class="blank" id="blank1">___</span>은(는) 데이터를 일시적으로 저장하며, 대표적으로 RAM과 ROM이 있습니다.',
+    accept: ['주기억 장치', '주기억장치', '메인 메모리', '주 기억 장치'],
+    explain: '주기억 장치는 통신 및 제어 프로그램이 사용하는 데이터를 일시적으로 기억하는 장치입니다. 반면 보조 기억 장치(하드디스크, USB 등)는 영구적으로 저장합니다.'
+  },
+  {
+    type: 'mc',
+    text: '<strong>정보 전송 시스템</strong>의 구성 요소가 아닌 것은?',
+    options: ['단말 장치', '전송 회선', '<strong>보조 기억 장치</strong>', '통신 제어 장치'],
+    answer: 2,
+    explain: '정보 전송 시스템: 단말 장치 + 전송 회선 + 신호 변환 장치 + 통신 제어 장치. 보조 기억 장치는 "정보 처리 시스템"의 일부입니다.'
+  },
+  {
+    type: 'case',
+    text: '광 케이블과 동축 케이블은 어떤 장치에 해당할까요?',
+    options: ['신호 변환 장치', '<strong>전송 회선</strong>', '통신 제어 장치', '단말 장치'],
+    answer: 1,
+    explain: '전송 회선은 정보를 전송하기 위한 전기적 신호가 이동하는 통로입니다. 동축 케이블, 광 케이블, 무선 전파 등이 여기에 포함됩니다.'
+  },
+  {
+    type: 'ox',
+    text: '입력 장치는 <strong>문자, 그림, 음성, 영상</strong> 등의 자료를 컴퓨터가 이해할 수 있는 신호로 바꾸어 준다.',
+    answer: 'O',
+    explain: '정답입니다! 키보드, 마우스, 스캐너, 마이크, 카메라, 터치스크린 등이 모두 입력 장치입니다.'
+  },
+  {
+    type: 'fill',
+    text: '컴퓨터의 실행 환경을 설정하고 모든 장치의 데이터 교환을 원활하게 해 주는 장치는 <span class="blank">___</span>이다.',
+    accept: ['메인 보드', '메인보드', 'mainboard', '마더보드'],
+    explain: '메인 보드(Main Board, Motherboard)는 CPU, RAM, 저장장치 등 모든 부품을 연결하여 데이터를 주고받게 해주는 핵심 부품입니다.'
+  },
+  {
+    type: 'mc',
+    text: '다음 중 <strong>보조 기억 장치</strong>만 묶은 것은?',
+    options: [
+      '키보드, 마우스, 스캐너',
+      '모니터, 프린터, 스피커',
+      '<strong>하드디스크, DVD, USB</strong>',
+      'RAM, ROM, 레지스터'
+    ],
+    answer: 2,
+    explain: '보조 기억 장치는 처리된 정보를 영구적으로 저장합니다. 하드디스크, DVD, USB, SSD 등이 대표적입니다. ①은 입력, ②는 출력, ④는 주기억 장치입니다.'
+  }
+];
+
+let curIdx = 0;
+let score = 0;
+let answers = []; // { correct: bool, userAnswer, question }
+let answered = false;
+
+const qCard = document.getElementById('qCard');
+const qCur = document.getElementById('qCur');
+const qTotal = document.getElementById('qTotal');
+const qScore = document.getElementById('qScore');
+const quizProgress = document.getElementById('quizProgress');
+const toast = document.getElementById('toast');
+
+qTotal.textContent = QUESTIONS.length;
+
+function showToast(text, cls = 'success') {
+  toast.textContent = text;
+  toast.className = 'toast show ' + cls;
+  setTimeout(() => toast.className = 'toast', 1500);
+}
+
+function render() {
+  if (curIdx >= QUESTIONS.length) { renderResult(); return; }
+  const q = QUESTIONS[curIdx];
+  answered = false;
+  qCur.textContent = curIdx + 1;
+  quizProgress.style.width = ((curIdx) / QUESTIONS.length * 100) + '%';
+
+  const typeBadge = { mc: ['객관식', 'mc'], ox: ['O/X', 'ox'], fill: ['빈칸 채우기', 'fill'], case: ['사례 적용', 'case'] }[q.type];
+
+  let body = '';
+  if (q.type === 'mc' || q.type === 'case') {
+    body = `<div class="options">` + q.options.map((opt, i) => `
+      <div class="option" data-i="${i}">
+        <div class="num">${i + 1}</div>
+        <div>${opt}</div>
+      </div>
+    `).join('') + `</div>`;
+  } else if (q.type === 'ox') {
+    body = `<div class="ox-buttons">
+      <button class="ox-btn O" data-v="O">O</button>
+      <button class="ox-btn X" data-v="X">X</button>
+    </div>`;
+  } else if (q.type === 'fill') {
+    body = `<div style="text-align:center;">
+      <input class="fill-input" id="fillInput" placeholder="답을 입력하세요" autocomplete="off">
+      <div style="margin-top:14px;"><button class="btn" id="fillSubmit">제출</button></div>
+    </div>`;
+  }
+
+  qCard.innerHTML = `
+    <div class="q-number">문제 ${curIdx + 1} <span class="q-type-badge ${typeBadge[1]}">${typeBadge[0]}</span></div>
+    <div class="q-text">${q.text}</div>
+    ${body}
+    <div class="explanation-box" id="explanation"></div>
+    <div class="q-footer">
+      <div></div>
+      <button class="btn" id="nextBtn" disabled>다음 →</button>
+    </div>
+  `;
+
+  // Attach handlers
+  if (q.type === 'mc' || q.type === 'case') {
+    qCard.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => selectMC(parseInt(opt.dataset.i)));
+    });
+  } else if (q.type === 'ox') {
+    qCard.querySelectorAll('.ox-btn').forEach(btn => {
+      btn.addEventListener('click', () => selectOX(btn.dataset.v));
+    });
+  } else if (q.type === 'fill') {
+    const input = document.getElementById('fillInput');
+    input.focus();
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') submitFill(); });
+    document.getElementById('fillSubmit').addEventListener('click', submitFill);
+  }
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    curIdx++;
+    render();
+  });
+}
+
+function selectMC(i) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[curIdx];
+  const opts = qCard.querySelectorAll('.option');
+  opts[q.answer].classList.add('correct');
+  const isCorrect = i === q.answer;
+  if (!isCorrect) opts[i].classList.add('wrong');
+
+  finishQuestion(isCorrect, i);
+}
+
+function selectOX(v) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[curIdx];
+  const selected = qCard.querySelector(`.ox-btn[data-v="${v}"]`);
+  const correctBtn = qCard.querySelector(`.ox-btn[data-v="${q.answer}"]`);
+  selected.classList.add('selected');
+  const isCorrect = v === q.answer;
+  if (isCorrect) { selected.style.background = '#d3f9d8'; }
+  else {
+    selected.style.background = '#ffe3e3';
+    correctBtn.style.background = '#d3f9d8';
+    correctBtn.classList.add('selected');
+  }
+  finishQuestion(isCorrect, v);
+}
+
+function submitFill() {
+  if (answered) return;
+  const q = QUESTIONS[curIdx];
+  const input = document.getElementById('fillInput');
+  const val = input.value.trim();
+  if (!val) { showToast('답을 입력해 주세요', 'error'); return; }
+  answered = true;
+  const normalized = val.replace(/\s+/g, ' ').toLowerCase();
+  const isCorrect = q.accept.some(a => a.toLowerCase().replace(/\s+/g, ' ') === normalized);
+  input.style.borderColor = isCorrect ? 'var(--green)' : 'var(--accent)';
+  input.style.background = isCorrect ? '#d3f9d8' : '#ffe3e3';
+  input.disabled = true;
+  document.getElementById('fillSubmit').disabled = true;
+  finishQuestion(isCorrect, val);
+}
+
+function finishQuestion(isCorrect, userAnswer) {
+  const q = QUESTIONS[curIdx];
+  if (isCorrect) { score += 10; showToast('✅ 정답! +10점', 'success'); }
+  else { showToast('❌ 오답', 'error'); }
+  qScore.textContent = score;
+  answers.push({ correct: isCorrect, userAnswer, question: q });
+
+  const expEl = document.getElementById('explanation');
+  expEl.innerHTML = `<strong>${isCorrect ? '✅ 정답!' : '❌ 오답'}</strong> · ${q.explain}`;
+  expEl.className = 'explanation-box show ' + (isCorrect ? 'correct' : 'wrong');
+
+  document.getElementById('nextBtn').disabled = false;
+  if (curIdx === QUESTIONS.length - 1) {
+    document.getElementById('nextBtn').textContent = '결과 보기 →';
+  }
+}
+
+function renderResult() {
+  quizProgress.style.width = '100%';
+  const pct = score / (QUESTIONS.length * 10) * 100;
+  let medal, title, msg;
+  if (pct >= 90) { medal = '🥇'; title = '정보통신 마스터!'; msg = '완벽한 이해도입니다. 선생님도 깜짝 놀랄 실력이에요!'; }
+  else if (pct >= 70) { medal = '🥈'; title = '훌륭합니다!'; msg = '핵심은 잘 알고 있어요. 틀린 부분만 복습해 봅시다.'; }
+  else if (pct >= 50) { medal = '🥉'; title = '괜찮아요'; msg = '교과서와 시뮬레이터를 한 번 더 돌려보면 더 잘할 수 있어요.'; }
+  else { medal = '💪'; title = '다시 도전!'; msg = '시뮬레이터로 개념을 다시 체험하고 와요.'; }
+
+  const review = answers.map((a, i) => `
+    <div class="review-item ${a.correct ? 'correct' : 'wrong'}">
+      <div><strong>Q${i + 1}.</strong> ${a.question.text.replace(/<[^>]*>/g, '').slice(0, 40)}...</div>
+    </div>
+  `).join('');
+
+  qCard.innerHTML = `
+    <div class="result-screen">
+      <div class="big-medal">${medal}</div>
+      <h2>${title}</h2>
+      <div class="big-score">${score} / ${QUESTIONS.length * 10}</div>
+      <div style="color:var(--text-light);font-size:15px;">${msg}</div>
+      <div class="review-list">${review}</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+        <button class="btn" onclick="location.reload()">🔄 다시 풀기</button>
+        <button class="btn btn-secondary" onclick="location.href='index.html'">🏠 홈으로</button>
+      </div>
+    </div>
+  `;
+}
+
+render();
+</script>
+
+</body>
+</html>

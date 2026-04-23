@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시뮬레이터 2 · 나만의 컴퓨터 만들기</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .build-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 1000px) {
+    .build-layout { grid-template-columns: 1.4fr 1fr; }
+  }
+
+  .computer-case {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    border: 2px solid var(--border);
+    position: relative;
+  }
+
+  .case-visual {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    border-radius: 20px;
+    padding: 28px;
+    min-height: 540px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 14px;
+    position: relative;
+  }
+  .case-visual::before {
+    content: "💻 컴퓨터 본체";
+    position: absolute;
+    top: -14px;
+    left: 24px;
+    background: var(--primary);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .slot {
+    border: 3px dashed rgba(255,255,255,0.3);
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .slot.drag-over {
+    border-color: var(--primary);
+    background: rgba(255, 180, 0, 0.15);
+    transform: scale(1.02);
+  }
+  .slot.filled-correct {
+    border-style: solid;
+    border-color: var(--green);
+    background: rgba(81, 207, 102, 0.12);
+    color: white;
+    animation: pop 0.4s;
+  }
+  .slot.filled-wrong {
+    border-style: solid;
+    border-color: var(--accent);
+    background: rgba(255, 107, 107, 0.15);
+    animation: shake 0.4s;
+  }
+  .slot .slot-label {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .slot .slot-hint {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+  .slot .part-in-slot {
+    font-size: 40px;
+    margin-bottom: 4px;
+  }
+  .slot .part-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .parts-tray {
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    border: 2px solid var(--border);
+  }
+  .parts-tray h3 { color: var(--primary-dark); margin-bottom: 12px; }
+  .parts-tray .help-text { font-size: 12px; color: var(--text-light); margin-bottom: 16px; }
+
+  .parts-pool {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .part {
+    background: linear-gradient(135deg, #fff4d6 0%, #ffe6a3 100%);
+    border: 2px solid var(--primary);
+    border-radius: 14px;
+    padding: 12px 6px;
+    text-align: center;
+    cursor: grab;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .part:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .part.dragging { opacity: 0.3; cursor: grabbing; }
+  .part.used { display: none; }
+  .part .emoji { font-size: 40px; display: block; }
+  .part .label { font-weight: 700; font-size: 12px; margin-top: 4px; }
+
+  .info-box {
+    background: linear-gradient(135deg, #e7f5ff 0%, #d0ebff 100%);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    border-left: 6px solid var(--blue-dark);
+    font-size: 13px;
+  }
+  .info-box strong { color: var(--blue-dark); }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 12px 20px;
+    background: white;
+    border-radius: 999px;
+    border: 2px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .progress-wrap {
+    flex: 1;
+    min-width: 180px;
+    height: 14px;
+    background: #f1f1f1;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--green));
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .boot-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    color: #51cf66;
+    font-family: monospace;
+    padding: 24px;
+  }
+  .boot-overlay.show { display: flex; }
+  .boot-overlay .content {
+    max-width: 600px;
+    width: 100%;
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .boot-overlay .typing::after {
+    content: "▊";
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .system-label {
+    font-size: 13px;
+    font-weight: 800;
+    margin: 16px 0 6px;
+    color: var(--primary-dark);
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>🖥️ 나만의 컴퓨터 만들기</h1>
+    <div class="subtitle">드래그로 부품을 올바른 자리에 조립해 보세요!</div>
+  </div>
+  <nav><a href="index.html">🏠 홈</a></nav>
+</header>
+
+<div class="container">
+
+  <div class="status-bar">
+    <div style="font-weight:800;">📊 조립 진행률</div>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <div id="progressText" style="font-weight:800;">0 / 6</div>
+    <button class="btn btn-secondary" id="resetBtn">↺ 다시 조립</button>
+  </div>
+
+  <div class="build-layout">
+
+    <div class="computer-case">
+      <div class="case-visual" id="caseVisual">
+        <div class="slot" data-slot="cpu">
+          <div class="slot-label">🧠 중앙 처리 장치</div>
+          <div class="slot-hint">제어·연산을 담당</div>
+        </div>
+        <div class="slot" data-slot="ram">
+          <div class="slot-label">💾 주기억 장치</div>
+          <div class="slot-hint">일시적 기억</div>
+        </div>
+        <div class="slot" data-slot="mainboard">
+          <div class="slot-label">🔌 메인 보드</div>
+          <div class="slot-hint">모든 장치를 연결</div>
+        </div>
+        <div class="slot" data-slot="storage">
+          <div class="slot-label">🗄️ 보조 기억 장치</div>
+          <div class="slot-hint">영구 저장</div>
+        </div>
+        <div class="slot" data-slot="input">
+          <div class="slot-label">⌨️ 입력 장치</div>
+          <div class="slot-hint">자료 입력</div>
+        </div>
+        <div class="slot" data-slot="output">
+          <div class="slot-label">🖥️ 출력 장치</div>
+          <div class="slot-hint">결과 표시</div>
+        </div>
+      </div>
+
+      <div class="info-box" id="infoBox">
+        <strong>💡 팁:</strong> 부품을 선택한 후 <u>알맞은 슬롯</u>에 드래그하세요.
+        슬롯에는 해당 장치의 이름과 역할이 쓰여 있습니다.
+        잘못된 자리에 놓으면 다시 돌아옵니다!
+      </div>
+    </div>
+
+    <div class="parts-tray">
+      <h3>🧰 부품 보관함</h3>
+      <div class="help-text">터치 기기에서는 부품을 탭한 뒤 슬롯을 탭해도 배치됩니다.</div>
+
+      <div class="system-label">💻 정보 처리 시스템 부품</div>
+      <div class="parts-pool" id="partsPool">
+        <div class="part" draggable="true" data-part="cpu" data-name="CPU">
+          <span class="emoji">🧠</span>
+          <div class="label">CPU</div>
+        </div>
+        <div class="part" draggable="true" data-part="ram" data-name="RAM">
+          <span class="emoji">💾</span>
+          <div class="label">RAM</div>
+        </div>
+        <div class="part" draggable="true" data-part="mainboard" data-name="메인보드">
+          <span class="emoji">🔌</span>
+          <div class="label">메인보드</div>
+        </div>
+        <div class="part" draggable="true" data-part="storage" data-name="하드디스크">
+          <span class="emoji">🗄️</span>
+          <div class="label">하드디스크</div>
+        </div>
+        <div class="part" draggable="true" data-part="input" data-name="키보드">
+          <span class="emoji">⌨️</span>
+          <div class="label">키보드</div>
+        </div>
+        <div class="part" draggable="true" data-part="output" data-name="모니터">
+          <span class="emoji">🖥️</span>
+          <div class="label">모니터</div>
+        </div>
+        <!-- 함정 부품 (정보 전송 시스템의 일부) -->
+        <div class="part" draggable="true" data-part="modem" data-name="모뎀">
+          <span class="emoji">📠</span>
+          <div class="label">모뎀</div>
+        </div>
+        <div class="part" draggable="true" data-part="router" data-name="라우터">
+          <span class="emoji">🖧</span>
+          <div class="label">라우터</div>
+        </div>
+      </div>
+
+      <div class="info-box" style="background:linear-gradient(135deg,#fff4d6 0%,#ffe6a3 100%);border-left-color:var(--primary-dark)">
+        <strong>⚠️ 주의!</strong> 보관함에는 <strong>정보 처리 시스템 부품 6개</strong>와
+        <strong>정보 전송 시스템 부품 2개(모뎀, 라우터)</strong>가 섞여 있어요.
+        컴퓨터 본체 안에 들어갈 6개만 골라 조립해야 합니다!
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="boot-overlay" id="bootOverlay">
+  <div class="content">
+    <div id="bootLines"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const partDescriptions = {
+  cpu: { slot: 'cpu', title: '🧠 CPU (중앙 처리 장치)', desc: '입력된 정보를 <strong>처리</strong>하고 출력 장치로 보내는 과정을 <strong>제어·조종</strong>하는 장치입니다. 제어 기능과 연산 기능을 담당합니다.' },
+  ram: { slot: 'ram', title: '💾 RAM (주기억 장치)', desc: '통신 및 제어 프로그램이 사용하는 <strong>데이터를 일시적으로 기억</strong>하는 장치입니다. RAM과 ROM이 여기에 포함됩니다.' },
+  mainboard: { slot: 'mainboard', title: '🔌 메인 보드', desc: '컴퓨터의 <strong>실행 환경을 설정</strong>하고 모든 장치의 데이터 교환을 원활하게 해주는 장치입니다.' },
+  storage: { slot: 'storage', title: '🗄️ 보조 기억 장치', desc: '처리된 정보를 <strong>영구적으로 저장</strong>하는 장치입니다. 하드디스크, DVD, USB 등이 있습니다.' },
+  input: { slot: 'input', title: '⌨️ 입력 장치', desc: '문자, 그림, 음성, 영상 등의 자료를 컴퓨터가 이해할 수 있는 <strong>신호로 바꾸어 주는</strong> 장치입니다. 키보드, 마우스, 스캐너, 터치스크린 등.' },
+  output: { slot: 'output', title: '🖥️ 출력 장치', desc: '컴퓨터가 만든 정보를 사람이 <strong>알아볼 수 있게 표시</strong>하는 장치입니다. 모니터, 프린터, 스피커 등.' },
+  modem: { slot: null, title: '📠 모뎀은 "정보 전송 시스템"의 신호 변환 장치입니다!', desc: '컴퓨터 본체 내부 부품이 아니에요. 아날로그 신호를 디지털로 바꿔 통신 회선으로 전송합니다.' },
+  router: { slot: null, title: '🖧 라우터는 "정보 전송 시스템"의 통신 제어 장치입니다!', desc: '컴퓨터 본체 내부 부품이 아니에요. 컴퓨터와 정보 통신망 사이의 데이터 경로를 만듭니다.' }
+};
+
+const infoBox = document.getElementById('infoBox');
+const toast = document.getElementById('toast');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+
+function showToast(text, cls = 'success') {
+  toast.textContent = text;
+  toast.className = 'toast show ' + cls;
+  setTimeout(() => { toast.className = 'toast'; }, 1800);
+}
+
+function updateProgress() {
+  const placed = document.querySelectorAll('.slot.filled-correct').length;
+  const total = 6;
+  progressFill.style.width = (placed / total * 100) + '%';
+  progressText.textContent = `${placed} / ${total}`;
+  if (placed === total) {
+    setTimeout(triggerBoot, 600);
+  }
+}
+
+function showInfo(part) {
+  const info = partDescriptions[part];
+  infoBox.innerHTML = `<strong>${info.title}</strong><br>${info.desc}`;
+}
+
+// Drag & drop
+let dragging = null;
+let selectedPart = null; // for touch/click mode
+
+document.querySelectorAll('.part').forEach(p => {
+  p.addEventListener('dragstart', e => {
+    dragging = p;
+    p.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    showInfo(p.dataset.part);
+  });
+  p.addEventListener('dragend', () => {
+    if (dragging) dragging.classList.remove('dragging');
+    dragging = null;
+  });
+  // Click/tap mode for touch devices
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.part.selected').forEach(x => x.classList.remove('selected'));
+    p.classList.add('selected');
+    p.style.outline = '4px solid var(--primary)';
+    selectedPart = p;
+    showInfo(p.dataset.part);
+    showToast(`"${p.dataset.name}" 선택됨 · 슬롯을 탭하세요`);
+  });
+});
+
+document.querySelectorAll('.slot').forEach(slot => {
+  slot.addEventListener('dragover', e => {
+    e.preventDefault();
+    slot.classList.add('drag-over');
+  });
+  slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+  slot.addEventListener('drop', e => {
+    e.preventDefault();
+    slot.classList.remove('drag-over');
+    if (!dragging) return;
+    placePart(dragging, slot);
+  });
+  slot.addEventListener('click', () => {
+    if (selectedPart) {
+      placePart(selectedPart, slot);
+      selectedPart.style.outline = '';
+      selectedPart = null;
+    }
+  });
+});
+
+function placePart(part, slot) {
+  if (slot.classList.contains('filled-correct')) {
+    showToast('이 슬롯은 이미 완성되었습니다!', 'error');
+    return;
+  }
+  const partKey = part.dataset.part;
+  const slotKey = slot.dataset.slot;
+  const info = partDescriptions[partKey];
+
+  if (info.slot === slotKey) {
+    // 정답
+    slot.classList.add('filled-correct');
+    slot.innerHTML = `
+      <div class="part-in-slot">${part.querySelector('.emoji').textContent}</div>
+      <div class="part-name">${part.dataset.name}</div>
+      <div class="slot-hint" style="color:rgba(255,255,255,0.7)">${slot.dataset.slot.toUpperCase()}</div>
+    `;
+    part.classList.add('used');
+    showToast(`✅ ${part.dataset.name} 장착 완료!`, 'success');
+    showInfo(partKey);
+    updateProgress();
+  } else {
+    // 오답
+    slot.classList.add('filled-wrong');
+    setTimeout(() => slot.classList.remove('filled-wrong'), 500);
+    if (info.slot === null) {
+      showToast(`❌ ${part.dataset.name}은(는) 컴퓨터 본체 부품이 아닙니다!`, 'error');
+    } else {
+      showToast(`❌ ${part.dataset.name}은(는) 이 자리가 아닙니다!`, 'error');
+    }
+    showInfo(partKey);
+  }
+}
+
+// Reset
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.querySelectorAll('.slot').forEach(s => {
+    s.classList.remove('filled-correct', 'filled-wrong');
+    const key = s.dataset.slot;
+    const labels = {
+      cpu: ['🧠 중앙 처리 장치', '제어·연산을 담당'],
+      ram: ['💾 주기억 장치', '일시적 기억'],
+      mainboard: ['🔌 메인 보드', '모든 장치를 연결'],
+      storage: ['🗄️ 보조 기억 장치', '영구 저장'],
+      input: ['⌨️ 입력 장치', '자료 입력'],
+      output: ['🖥️ 출력 장치', '결과 표시']
+    };
+    s.innerHTML = `<div class="slot-label">${labels[key][0]}</div><div class="slot-hint">${labels[key][1]}</div>`;
+  });
+  document.querySelectorAll('.part').forEach(p => { p.classList.remove('used'); p.style.outline = ''; });
+  updateProgress();
+  document.getElementById('bootOverlay').classList.remove('show');
+  document.getElementById('bootLines').innerHTML = '';
+});
+
+// Boot animation
+async function triggerBoot() {
+  const overlay = document.getElementById('bootOverlay');
+  const lines = document.getElementById('bootLines');
+  overlay.classList.add('show');
+  lines.innerHTML = '';
+
+  const bootSeq = [
+    '> BIOS v2.26 loading...',
+    '> 메인보드 초기화... OK',
+    '> CPU 감지: 정상 (제어 기능 + 연산 기능)',
+    '> RAM 용량 확인... OK',
+    '> 보조 기억 장치 스캔... OK',
+    '> 입력 장치 연결: 키보드 ✓',
+    '> 출력 장치 연결: 모니터 ✓',
+    '> 모든 장치 정상 작동!',
+    '',
+    '🎉 축하합니다! 컴퓨터 조립 성공!',
+    '',
+    '정보 처리 시스템 = CPU + 주기억 + 보조기억 + 입력 + 출력',
+    '',
+    '[ESC 또는 다시 조립을 누르세요]'
+  ];
+
+  for (const line of bootSeq) {
+    const div = document.createElement('div');
+    div.textContent = line;
+    if (line.startsWith('🎉')) div.style.color = '#ffd84d';
+    if (line.startsWith('정보')) div.style.color = '#4dabf7';
+    lines.appendChild(div);
+    await new Promise(r => setTimeout(r, 350));
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('bootOverlay').classList.remove('show');
+  }
+});
+
+updateProgress();
+</script>
+
+</body>
+</html>

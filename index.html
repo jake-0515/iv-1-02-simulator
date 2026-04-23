@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정보 통신 기술의 구성 | 중3 기술 | IV-1-02</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .hero {
+    background: linear-gradient(135deg, #ffd84d 0%, #ff9a3c 100%);
+    border-radius: 28px;
+    padding: 40px;
+    color: #3a2600;
+    margin-bottom: 32px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    align-items: center;
+    gap: 32px;
+  }
+  .hero h2 { font-size: 32px; margin-bottom: 12px; }
+  .hero p { font-size: 16px; font-weight: 500; opacity: 0.9; }
+  .hero .visual {
+    font-size: 120px;
+    text-align: center;
+  }
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero .visual { font-size: 72px; }
+  }
+  .section-title {
+    font-size: 24px;
+    margin: 32px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::before {
+    content: "";
+    width: 6px;
+    height: 24px;
+    background: var(--primary);
+    border-radius: 3px;
+  }
+  .flow-box {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    border: 2px dashed var(--primary);
+    margin-bottom: 32px;
+    text-align: center;
+  }
+  .flow-box .elements {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .flow-box .element {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    min-width: 120px;
+  }
+  .flow-box .element .emoji { font-size: 48px; }
+  .flow-box .element .name { font-weight: 800; margin-top: 8px; color: var(--primary-dark); }
+  .flow-box .element .desc { font-size: 12px; color: var(--text-light); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>💡 정보 통신 기술의 구성</h1>
+    <div class="subtitle">IV. 정보 통신 기술의 세계 · 1-02 · 중학교 3학년 기술</div>
+  </div>
+  <nav>
+    <a href="index.html">🏠 홈</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <div class="hero">
+    <div>
+      <h2>데이터는 어떻게 여행할까?</h2>
+      <p>친구에게 카톡을 보낼 때, 유튜브 영상을 볼 때, 우리가 쓰는 정보는 수많은 장치를 거쳐 이동합니다.<br>
+      <strong>4개의 시뮬레이터와 학습 활동</strong>으로 정보 통신 기술의 비밀을 풀어봅시다!</p>
+    </div>
+    <div class="visual">📡💬📱</div>
+  </div>
+
+  <div class="objective-box">
+    <h2>학습 목표</h2>
+    <ul>
+      <li>정보 통신 기술의 <strong>4요소</strong>를 설명할 수 있다.</li>
+      <li>정보 통신 기술의 <strong>구성(정보 처리 시스템 / 정보 전송 시스템)</strong>을 설명할 수 있다.</li>
+      <li>컴퓨터의 <strong>6가지 구성 요소</strong>와 각 장치의 역할을 구분할 수 있다.</li>
+    </ul>
+  </div>
+
+  <div class="flow-box">
+    <strong style="font-size:18px;color:var(--primary-dark)">🧭 정보 통신 기술의 4요소</strong>
+    <div class="elements">
+      <div class="element">
+        <div class="emoji">👩‍💻</div>
+        <div class="name">정보원</div>
+        <div class="desc">송신자</div>
+      </div>
+      <div style="align-self:center;font-size:28px;color:var(--primary)">➡️</div>
+      <div class="element">
+        <div class="emoji">📄</div>
+        <div class="name">정보 대상물</div>
+        <div class="desc">텍스트/이미지/음성</div>
+      </div>
+      <div style="align-self:center;font-size:28px;color:var(--primary)">➡️</div>
+      <div class="element">
+        <div class="emoji">📡</div>
+        <div class="name">전송 매체</div>
+        <div class="desc">통신 회선</div>
+      </div>
+      <div style="align-self:center;font-size:28px;color:var(--primary)">➡️</div>
+      <div class="element">
+        <div class="emoji">🧑‍🎓</div>
+        <div class="name">정보 목적지</div>
+        <div class="desc">수신자</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-title">🎮 시뮬레이터 &amp; 학습 활동</h2>
+
+  <div class="activity-grid">
+
+    <a class="activity-card" href="simulator_data_journey.html">
+      <span class="badge">시뮬레이터 1</span>
+      <span class="icon">🛰️</span>
+      <h3>데이터의 여행</h3>
+      <p>내가 보낸 메시지가 4요소와 정보 전송 시스템을 거쳐 친구에게 도달하는 전 과정을 애니메이션으로 체험합니다.</p>
+      <div class="go">시작하기 →</div>
+    </a>
+
+    <a class="activity-card" href="simulator_build_computer.html">
+      <span class="badge blue">시뮬레이터 2</span>
+      <span class="icon">🖥️</span>
+      <h3>나만의 컴퓨터 만들기</h3>
+      <p>CPU, RAM, 하드디스크를 직접 드래그해서 조립! 모든 부품을 올바른 자리에 놓으면 컴퓨터가 부팅됩니다.</p>
+      <div class="go">시작하기 →</div>
+    </a>
+
+    <a class="activity-card" href="activity_device_sort.html">
+      <span class="badge green">학습활동 1</span>
+      <span class="icon">🧩</span>
+      <h3>장치 분류 챌린지</h3>
+      <p>다양한 장치(키보드·모니터·CPU·RAM…)를 5개의 카테고리로 분류하세요. 제한시간 안에 최고 점수에 도전!</p>
+      <div class="go">시작하기 →</div>
+    </a>
+
+    <a class="activity-card" href="activity_signal.html">
+      <span class="badge purple">학습활동 2</span>
+      <span class="icon">📈</span>
+      <h3>아날로그 ↔ 디지털 변환</h3>
+      <p>신호 변환 장치(모뎀)는 무엇을 할까? 아날로그 파형과 디지털 신호를 직접 조작하며 변환 원리를 이해합니다.</p>
+      <div class="go">시작하기 →</div>
+    </a>
+
+    <a class="activity-card" href="activity_quiz.html">
+      <span class="badge pink">학습활동 3</span>
+      <span class="icon">🏆</span>
+      <h3>정보 통신 기술 퀴즈</h3>
+      <p>10문제로 배운 내용을 확인! 객관식·O/X·빈칸 채우기까지 다양한 유형으로 즐겁게 복습하세요.</p>
+      <div class="go">시작하기 →</div>
+    </a>
+
+  </div>
+
+  <div style="margin-top:48px;text-align:center;color:var(--text-light);font-size:13px;">
+    © 2026 중3 기술 | IV-1-02 정보 통신 기술의 구성 · 본 자료는 수업용으로 제작되었습니다.
+  </div>
+
+</div>
+
+</body>
+</html>

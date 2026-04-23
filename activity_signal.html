@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학습활동 2 · 아날로그 ↔ 디지털 신호 변환</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 1000px) { .layout { grid-template-columns: 1.5fr 1fr; } }
+
+  .canvas-wrap {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    border: 2px solid var(--border);
+  }
+  canvas {
+    width: 100%;
+    height: 340px;
+    background: #fafafa;
+    border-radius: 16px;
+    touch-action: none;
+  }
+
+  .signal-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .slider-group { background: #f9f6ef; border-radius: 14px; padding: 12px 16px; }
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .slider-group input[type=range] {
+    width: 100%;
+    accent-color: var(--primary);
+  }
+
+  .explanation {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    border: 2px solid var(--border);
+  }
+  .explanation h3 { color: var(--primary-dark); margin-bottom: 12px; }
+
+  .step {
+    background: #fff4d6;
+    border-left: 6px solid var(--primary);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .step strong { color: var(--primary-dark); }
+
+  .binary-display {
+    font-family: 'Courier New', monospace;
+    font-size: 22px;
+    font-weight: bold;
+    background: #1a1a1a;
+    color: #51cf66;
+    padding: 16px;
+    border-radius: 12px;
+    overflow-x: auto;
+    white-space: nowrap;
+    letter-spacing: 4px;
+    text-align: center;
+    margin: 12px 0;
+  }
+
+  .mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .mode-toggle button {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .mode-toggle button.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+
+  .challenge {
+    background: linear-gradient(135deg, #e7f5ff 0%, #d0ebff 100%);
+    border-radius: 16px;
+    padding: 18px;
+    margin-top: 16px;
+    border-left: 6px solid var(--blue-dark);
+  }
+  .challenge h4 { color: var(--blue-dark); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>📈 아날로그 ↔ 디지털 신호 변환</h1>
+    <div class="subtitle">신호 변환 장치(모뎀)의 원리를 직접 체험!</div>
+  </div>
+  <nav><a href="index.html">🏠 홈</a></nav>
+</header>
+
+<div class="container">
+
+  <div class="layout">
+
+    <div class="canvas-wrap">
+      <div class="mode-toggle">
+        <button class="active" data-mode="convert">🔁 변환 체험 (A → D)</button>
+        <button data-mode="compare">📊 나란히 비교</button>
+      </div>
+
+      <canvas id="canvas" width="900" height="340"></canvas>
+
+      <div class="signal-controls">
+        <div class="slider-group">
+          <label>주파수 (Frequency) <span id="freqVal">2</span> Hz</label>
+          <input type="range" id="freq" min="1" max="6" step="0.5" value="2">
+        </div>
+        <div class="slider-group">
+          <label>진폭 (Amplitude) <span id="ampVal">80</span> %</label>
+          <input type="range" id="amp" min="20" max="100" step="5" value="80">
+        </div>
+        <div class="slider-group">
+          <label>샘플링 (Sampling) <span id="sampleVal">16</span> 회</label>
+          <input type="range" id="sample" min="4" max="32" step="2" value="16">
+        </div>
+        <div class="slider-group">
+          <label>임계값 (Threshold) <span id="thresholdVal">0</span></label>
+          <input type="range" id="threshold" min="-50" max="50" step="5" value="0">
+        </div>
+      </div>
+
+      <div class="binary-display" id="binaryDisplay">0101010101010101</div>
+
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-blue" id="animateBtn">🎬 샘플링 애니메이션</button>
+        <button class="btn btn-secondary" id="resetBtn">↺ 기본값</button>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <h3>🔍 원리 이해하기</h3>
+
+      <div class="step">
+        <strong>1️⃣ 아날로그 신호란?</strong><br>
+        소리·영상처럼 <strong>연속적으로 변하는 파형</strong>. 마이크·카메라에서 처음 만들어집니다.
+      </div>
+
+      <div class="step">
+        <strong>2️⃣ 샘플링 (Sampling)</strong><br>
+        파형의 높이를 <strong>일정 간격으로 측정</strong>합니다. 측정 횟수가 많을수록 원본에 가깝게 됩니다.
+      </div>
+
+      <div class="step">
+        <strong>3️⃣ 디지털 변환 (0/1)</strong><br>
+        측정값을 임계값과 비교해 <strong>1(높음) 또는 0(낮음)</strong>으로 바꿉니다.<br>
+        → 통신 회선(케이블/광)으로 전송 가능한 형태가 됩니다.
+      </div>
+
+      <div class="step">
+        <strong>4️⃣ 역변환 (수신측)</strong><br>
+        수신측 <strong>모뎀</strong>이 다시 디지털을 아날로그로 바꿔 스피커·모니터로 출력합니다.
+      </div>
+
+      <div class="challenge">
+        <h4>🎯 미션</h4>
+        <ol style="padding-left:20px;font-size:13px;line-height:1.7;">
+          <li>주파수를 최소(1 Hz)로 맞추고 샘플링을 32로 올려보세요. 디지털 신호가 더 부드러워지나요?</li>
+          <li>진폭을 낮추고 임계값을 올려보세요. 0이 많이 나올까요, 1이 많이 나올까요?</li>
+          <li>🎬 애니메이션 버튼으로 샘플링 과정을 천천히 관찰해 보세요.</li>
+        </ol>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const freqInput = document.getElementById('freq');
+const ampInput = document.getElementById('amp');
+const sampleInput = document.getElementById('sample');
+const thresholdInput = document.getElementById('threshold');
+
+const freqVal = document.getElementById('freqVal');
+const ampVal = document.getElementById('ampVal');
+const sampleVal = document.getElementById('sampleVal');
+const thresholdVal = document.getElementById('thresholdVal');
+
+const binaryDisplay = document.getElementById('binaryDisplay');
+
+let mode = 'convert';
+let animateIdx = null;
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+window.addEventListener('resize', resize);
+
+function draw() {
+  const W = canvas.clientWidth;
+  const H = canvas.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  const freq = parseFloat(freqInput.value);
+  const amp = parseFloat(ampInput.value) / 100;
+  const samples = parseInt(sampleInput.value);
+  const threshold = parseFloat(thresholdInput.value) / 100;
+
+  const midY = H / 2;
+  const margin = 40;
+  const innerW = W - margin * 2;
+
+  // Grid
+  ctx.strokeStyle = '#eee';
+  ctx.lineWidth = 1;
+  for (let x = margin; x <= W - margin; x += innerW / 10) {
+    ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, H - 20); ctx.stroke();
+  }
+  for (let y = 20; y <= H - 20; y += (H - 40) / 6) {
+    ctx.beginPath(); ctx.moveTo(margin, y); ctx.lineTo(W - margin, y); ctx.stroke();
+  }
+
+  // X-axis
+  ctx.strokeStyle = '#bbb';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(margin, midY); ctx.lineTo(W - margin, midY); ctx.stroke();
+
+  // Threshold line
+  const thresholdY = midY - threshold * (H / 3);
+  ctx.strokeStyle = '#ff6b6b';
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(margin, thresholdY); ctx.lineTo(W - margin, thresholdY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#ff6b6b';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('임계값', W - margin - 40, thresholdY - 6);
+
+  // Analog wave
+  ctx.strokeStyle = '#1c7ed6';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let x = 0; x <= innerW; x++) {
+    const t = x / innerW;
+    const y = midY - Math.sin(t * Math.PI * 2 * freq) * (H / 3) * amp;
+    if (x === 0) ctx.moveTo(margin + x, y); else ctx.lineTo(margin + x, y);
+  }
+  ctx.stroke();
+
+  // Sample points & digital signal
+  const bits = [];
+  const sampleXs = [];
+  for (let i = 0; i < samples; i++) {
+    const t = i / samples;
+    const x = margin + t * innerW;
+    const analogY = midY - Math.sin(t * Math.PI * 2 * freq) * (H / 3) * amp;
+    const bit = analogY < thresholdY ? 1 : 0; // y is inverted; lower y = higher signal
+    bits.push(bit);
+    sampleXs.push(x);
+
+    // Sample marker (dot)
+    ctx.fillStyle = '#ffb400';
+    ctx.beginPath(); ctx.arc(x, analogY, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#e59c00';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Drop line
+    ctx.strokeStyle = 'rgba(255, 180, 0, 0.3)';
+    ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(x, analogY); ctx.lineTo(x, midY); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw digital signal (square wave)
+  if (mode === 'convert' || mode === 'compare') {
+    const baseY = mode === 'compare' ? H - 60 : midY;
+    const lowY = baseY + 40;
+    const highY = baseY - 40;
+
+    ctx.strokeStyle = '#2f9e44';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i < bits.length; i++) {
+      const x1 = sampleXs[i];
+      const x2 = i < bits.length - 1 ? sampleXs[i + 1] : (margin + innerW);
+      const y = bits[i] === 1 ? highY : lowY;
+      if (i === 0) ctx.moveTo(x1, y); else {
+        const prevY = bits[i - 1] === 1 ? highY : lowY;
+        if (prevY !== y) ctx.lineTo(x1, y);
+        else ctx.lineTo(x1, y);
+      }
+      ctx.lineTo(x2, y);
+    }
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = '#2f9e44';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('1', margin - 16, highY + 4);
+    ctx.fillText('0', margin - 16, lowY + 4);
+
+    // Bit labels
+    ctx.fillStyle = '#444';
+    ctx.font = 'bold 11px monospace';
+    for (let i = 0; i < bits.length && i < 32; i++) {
+      ctx.fillText(bits[i], sampleXs[i] - 3, highY - 14);
+    }
+  }
+
+  // Legend
+  ctx.fillStyle = '#1c7ed6';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('∿ 아날로그 신호', 12, 18);
+  ctx.fillStyle = '#2f9e44';
+  ctx.fillText('▁▔ 디지털 신호', 160, 18);
+  ctx.fillStyle = '#ffb400';
+  ctx.fillText('● 샘플링 지점', 300, 18);
+
+  // Binary display
+  binaryDisplay.textContent = bits.join(' ');
+}
+
+[freqInput, ampInput, sampleInput, thresholdInput].forEach(input => {
+  input.addEventListener('input', () => {
+    freqVal.textContent = freqInput.value;
+    ampVal.textContent = ampInput.value;
+    sampleVal.textContent = sampleInput.value;
+    thresholdVal.textContent = thresholdInput.value;
+    draw();
+  });
+});
+
+document.querySelectorAll('.mode-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+    draw();
+  });
+});
+
+document.getElementById('animateBtn').addEventListener('click', () => {
+  if (animateIdx !== null) return;
+  const target = parseInt(sampleInput.value);
+  let cur = 2;
+  sampleInput.value = cur;
+  sampleVal.textContent = cur;
+  draw();
+  animateIdx = setInterval(() => {
+    cur += 2;
+    if (cur > target) {
+      clearInterval(animateIdx);
+      animateIdx = null;
+      return;
+    }
+    sampleInput.value = cur;
+    sampleVal.textContent = cur;
+    draw();
+  }, 200);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  freqInput.value = 2; ampInput.value = 80; sampleInput.value = 16; thresholdInput.value = 0;
+  freqVal.textContent = 2; ampVal.textContent = 80; sampleVal.textContent = 16; thresholdVal.textContent = 0;
+  draw();
+});
+
+resize();
+</script>
+
+</body>
+</html>

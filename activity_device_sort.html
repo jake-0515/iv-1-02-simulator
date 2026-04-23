@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학습활동 1 · 장치 분류 챌린지</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .game-status {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 18px;
+    text-align: center;
+  }
+  .stat .value { font-size: 28px; font-weight: 900; color: var(--primary-dark); }
+  .stat .label { font-size: 12px; color: var(--text-light); font-weight: 700; letter-spacing: 0.5px; }
+
+  .game-area {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 900px) { .game-area { grid-template-columns: 1fr 1.3fr; } }
+
+  .device-pool {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+  }
+  .device-pool h3 { color: var(--primary-dark); margin-bottom: 12px; }
+
+  .devices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 10px;
+    min-height: 200px;
+  }
+
+  .device {
+    background: linear-gradient(135deg, #fff4d6 0%, #ffe6a3 100%);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: 12px 6px;
+    text-align: center;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s;
+  }
+  .device:hover { transform: translateY(-2px); }
+  .device.dragging { opacity: 0.4; }
+  .device.selected { outline: 4px solid var(--accent); }
+  .device.placed { display: none; }
+  .device .emoji { font-size: 32px; display: block; }
+  .device .name { font-size: 11px; font-weight: 700; margin-top: 4px; }
+
+  .categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .category {
+    background: white;
+    border: 3px dashed;
+    border-radius: 18px;
+    padding: 14px;
+    min-height: 150px;
+    transition: all 0.2s;
+  }
+  .category.drag-over { transform: scale(1.03); }
+
+  .category.c-input { border-color: var(--blue); background: linear-gradient(180deg, #e7f5ff 0%, white 100%); }
+  .category.c-output { border-color: var(--purple); background: linear-gradient(180deg, #f3f0ff 0%, white 100%); }
+  .category.c-cpu { border-color: var(--accent); background: linear-gradient(180deg, #ffe3e3 0%, white 100%); }
+  .category.c-ram { border-color: #fd7e14; background: linear-gradient(180deg, #fff4e6 0%, white 100%); }
+  .category.c-storage { border-color: var(--green-dark); background: linear-gradient(180deg, #d3f9d8 0%, white 100%); }
+  .category.c-transmit { border-color: #228be6; background: linear-gradient(180deg, #d0ebff 0%, white 100%); }
+
+  .category h4 {
+    font-size: 15px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .category .items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .category .item {
+    background: white;
+    border: 2px solid;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .category.c-input .item { border-color: var(--blue); }
+  .category.c-output .item { border-color: var(--purple); }
+  .category.c-cpu .item { border-color: var(--accent); }
+  .category.c-ram .item { border-color: #fd7e14; }
+  .category.c-storage .item { border-color: var(--green-dark); }
+  .category.c-transmit .item { border-color: #228be6; }
+
+  .result-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+  }
+  .result-overlay.show { display: flex; }
+  .result-card {
+    background: white;
+    border-radius: 28px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    animation: pop 0.4s;
+  }
+  .result-card .medal { font-size: 80px; }
+  .result-card h2 { font-size: 28px; color: var(--primary-dark); margin: 12px 0; }
+  .result-card .score { font-size: 48px; font-weight: 900; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>🧩 장치 분류 챌린지</h1>
+    <div class="subtitle">장치를 알맞은 카테고리에 분류하세요!</div>
+  </div>
+  <nav><a href="index.html">🏠 홈</a></nav>
+</header>
+
+<div class="container">
+
+  <div class="game-status">
+    <div class="stat"><div class="value" id="score">0</div><div class="label">점수</div></div>
+    <div class="stat"><div class="value" id="correct">0</div><div class="label">정답</div></div>
+    <div class="stat"><div class="value" id="wrong">0</div><div class="label">오답</div></div>
+    <div class="stat"><div class="value" id="timer">60</div><div class="label">남은 시간 (초)</div></div>
+    <div class="stat" style="display:flex;align-items:center;justify-content:center;">
+      <button class="btn btn-accent" id="startBtn">▶️ 시작</button>
+    </div>
+  </div>
+
+  <div class="game-area">
+
+    <div class="device-pool">
+      <h3>📦 남은 장치 (<span id="remaining">12</span>개)</h3>
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:10px;">
+        각 장치를 오른쪽 카테고리로 드래그하세요. (모바일: 탭 후 카테고리 탭)
+      </div>
+      <div class="devices-grid" id="devicesGrid"></div>
+    </div>
+
+    <div>
+      <div class="categories">
+        <div class="category c-input" data-cat="input">
+          <h4>⌨️ 입력 장치</h4>
+          <div style="font-size:11px;color:var(--text-light);">정보를 컴퓨터에 입력</div>
+          <div class="items"></div>
+        </div>
+        <div class="category c-output" data-cat="output">
+          <h4>🖥️ 출력 장치</h4>
+          <div style="font-size:11px;color:var(--text-light);">처리 결과를 표시</div>
+          <div class="items"></div>
+        </div>
+        <div class="category c-cpu" data-cat="cpu">
+          <h4>🧠 중앙 처리 장치</h4>
+          <div style="font-size:11px;color:var(--text-light);">정보 처리·제어</div>
+          <div class="items"></div>
+        </div>
+        <div class="category c-ram" data-cat="ram">
+          <h4>💾 주기억 장치</h4>
+          <div style="font-size:11px;color:var(--text-light);">일시적 기억</div>
+          <div class="items"></div>
+        </div>
+        <div class="category c-storage" data-cat="storage">
+          <h4>🗄️ 보조 기억 장치</h4>
+          <div style="font-size:11px;color:var(--text-light);">영구 저장</div>
+          <div class="items"></div>
+        </div>
+        <div class="category c-transmit" data-cat="transmit">
+          <h4>📡 정보 전송 시스템</h4>
+          <div style="font-size:11px;color:var(--text-light);">전송·신호 변환·통신 제어</div>
+          <div class="items"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="medal" id="medal">🏆</div>
+    <h2 id="resultTitle">결과!</h2>
+    <div class="score" id="resultScore">0점</div>
+    <div style="margin:16px 0;color:var(--text-light)" id="resultMsg"></div>
+    <button class="btn" onclick="location.reload()">🔄 다시 도전</button>
+    <button class="btn btn-secondary" onclick="location.href='index.html'">🏠 홈으로</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEVICES = [
+  { id: 'keyboard', name: '키보드', emoji: '⌨️', cat: 'input' },
+  { id: 'mouse', name: '마우스', emoji: '🖱️', cat: 'input' },
+  { id: 'scanner', name: '스캐너', emoji: '📷', cat: 'input' },
+  { id: 'monitor', name: '모니터', emoji: '🖥️', cat: 'output' },
+  { id: 'printer', name: '프린터', emoji: '🖨️', cat: 'output' },
+  { id: 'speaker', name: '스피커', emoji: '🔊', cat: 'output' },
+  { id: 'cpu', name: 'CPU', emoji: '🧠', cat: 'cpu' },
+  { id: 'ram', name: 'RAM', emoji: '💾', cat: 'ram' },
+  { id: 'rom', name: 'ROM', emoji: '🧷', cat: 'ram' },
+  { id: 'hdd', name: '하드디스크', emoji: '🗄️', cat: 'storage' },
+  { id: 'dvd', name: 'DVD', emoji: '💿', cat: 'storage' },
+  { id: 'usb', name: 'USB', emoji: '🔌', cat: 'storage' },
+  { id: 'modem', name: '모뎀', emoji: '📠', cat: 'transmit' },
+  { id: 'cable', name: '광케이블', emoji: '🌐', cat: 'transmit' },
+  { id: 'router', name: '라우터', emoji: '🖧', cat: 'transmit' }
+];
+
+let score = 0, correct = 0, wrong = 0, timeLeft = 60, timerId = null, started = false;
+
+const devicesGrid = document.getElementById('devicesGrid');
+const scoreEl = document.getElementById('score');
+const correctEl = document.getElementById('correct');
+const wrongEl = document.getElementById('wrong');
+const timerEl = document.getElementById('timer');
+const remainingEl = document.getElementById('remaining');
+const toast = document.getElementById('toast');
+
+function showToast(text, cls = 'success') {
+  toast.textContent = text;
+  toast.className = 'toast show ' + cls;
+  setTimeout(() => toast.className = 'toast', 1500);
+}
+
+function renderDevices() {
+  devicesGrid.innerHTML = '';
+  const shuffled = [...DEVICES].sort(() => Math.random() - 0.5);
+  shuffled.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'device';
+    el.draggable = true;
+    el.dataset.id = d.id;
+    el.dataset.cat = d.cat;
+    el.dataset.name = d.name;
+    el.innerHTML = `<span class="emoji">${d.emoji}</span><div class="name">${d.name}</div>`;
+
+    el.addEventListener('dragstart', e => {
+      if (!started) { e.preventDefault(); showToast('▶️ 시작을 누르세요', 'error'); return; }
+      dragging = el;
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => {
+      if (dragging) dragging.classList.remove('dragging');
+      dragging = null;
+    });
+    el.addEventListener('click', () => {
+      if (!started) { showToast('▶️ 시작을 누르세요', 'error'); return; }
+      document.querySelectorAll('.device.selected').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      selected = el;
+      showToast(`"${d.name}" 선택 · 카테고리를 탭하세요`);
+    });
+
+    devicesGrid.appendChild(el);
+  });
+  remainingEl.textContent = DEVICES.length;
+}
+
+let dragging = null;
+let selected = null;
+
+document.querySelectorAll('.category').forEach(cat => {
+  cat.addEventListener('dragover', e => { e.preventDefault(); cat.classList.add('drag-over'); });
+  cat.addEventListener('dragleave', () => cat.classList.remove('drag-over'));
+  cat.addEventListener('drop', e => {
+    e.preventDefault();
+    cat.classList.remove('drag-over');
+    if (!dragging) return;
+    placeDevice(dragging, cat);
+  });
+  cat.addEventListener('click', () => {
+    if (selected) {
+      placeDevice(selected, cat);
+      selected.classList.remove('selected');
+      selected = null;
+    }
+  });
+});
+
+function placeDevice(device, cat) {
+  const deviceCat = device.dataset.cat;
+  const targetCat = cat.dataset.cat;
+  const emoji = device.querySelector('.emoji').textContent;
+  const name = device.dataset.name;
+
+  if (deviceCat === targetCat) {
+    score += 10;
+    correct++;
+    const item = document.createElement('div');
+    item.className = 'item';
+    item.innerHTML = `${emoji} ${name}`;
+    cat.querySelector('.items').appendChild(item);
+    device.classList.add('placed');
+    showToast(`✅ 정답! +10점`, 'success');
+  } else {
+    score = Math.max(0, score - 3);
+    wrong++;
+    cat.style.animation = 'shake 0.4s';
+    setTimeout(() => cat.style.animation = '', 400);
+    showToast(`❌ ${name}은(는) 다른 카테고리!`, 'error');
+  }
+
+  updateUI();
+
+  const remaining = document.querySelectorAll('.device:not(.placed)').length;
+  remainingEl.textContent = remaining;
+
+  if (remaining === 0) finish();
+}
+
+function updateUI() {
+  scoreEl.textContent = score;
+  correctEl.textContent = correct;
+  wrongEl.textContent = wrong;
+}
+
+function tick() {
+  timeLeft--;
+  timerEl.textContent = timeLeft;
+  if (timeLeft <= 10) timerEl.style.color = 'var(--accent)';
+  if (timeLeft <= 0) finish();
+}
+
+function startGame() {
+  if (started) return;
+  started = true;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('startBtn').textContent = '게임 중...';
+  timerId = setInterval(tick, 1000);
+}
+
+function finish() {
+  clearInterval(timerId);
+  started = false;
+  const overlay = document.getElementById('resultOverlay');
+  const titleEl = document.getElementById('resultTitle');
+  const scoreEl2 = document.getElementById('resultScore');
+  const msgEl = document.getElementById('resultMsg');
+  const medalEl = document.getElementById('medal');
+
+  scoreEl2.textContent = score + '점';
+  const pct = (correct / DEVICES.length) * 100;
+  if (pct >= 90) { medalEl.textContent = '🥇'; titleEl.textContent = '정보통신 마스터!'; msgEl.textContent = '완벽한 분류 실력입니다!'; }
+  else if (pct >= 70) { medalEl.textContent = '🥈'; titleEl.textContent = '훌륭해요!'; msgEl.textContent = '조금만 더 연습하면 완벽!'; }
+  else if (pct >= 50) { medalEl.textContent = '🥉'; titleEl.textContent = '괜찮아요!'; msgEl.textContent = '교과서를 한 번 더 복습해 봐요.'; }
+  else { medalEl.textContent = '💪'; titleEl.textContent = '도전!'; msgEl.textContent = '다시 한 번 시도해 볼까요?'; }
+
+  msgEl.innerHTML += `<br>정답 ${correct} · 오답 ${wrong}`;
+  overlay.classList.add('show');
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+renderDevices();
+</script>
+
+</body>
+</html>
